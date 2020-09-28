@@ -1,14 +1,21 @@
 const fs = require('fs');
+const codeGeneratorModule = require('./codeGenerator');
 const lexerModule = require('./lexer');
 const parserModule = require('./parser');
 
 fs.readFile('./source_codes/source.c', 'utf-8', (err, input) => {
     if (err === null) {
+        // split input code on tokens 
         const tokens = lexerModule.lexer(input);
-        let ast = parserModule.parser(tokens);
-        ast = JSON.stringify(ast, null, 2);
 
-        console.log(ast);
+        // build ast
+        let ast = parserModule.parser(tokens);
+
+        // pretty output in console
+        console.log(JSON.stringify(ast, null, 2));
+
+        // generate asm code
+        codeGeneratorModule.codeGenerator(ast);
     }
     else {
         throw new Error(err.message);

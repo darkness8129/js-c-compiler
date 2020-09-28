@@ -1,32 +1,40 @@
 const parser = (tokens) => {
-
+    // index of current token
     var current = 0;
 
     const walk = () => {
+        // current token
         var token = tokens[current];
 
+        // function node
         if (token.type === 'TYPE') {
             var type = token.value;
 
+            // skip type token
             token = tokens[++current];
 
             var node = {
                 id: 'Function',
                 name: token.value,
                 type: type,
+                params: [],
                 body: []
             };
 
+            // skip main token
             token = tokens[++current];
 
+            // adding params for func node
             if (
-                token.type === 'PAREN' &&
+                token.type === 'PARENTHESIS' &&
                 token.value === '('
             ) {
+
                 token = tokens[++current];
+
                 while (
-                    (token.type !== 'PAREN') ||
-                    (token.type === 'PAREN' && token.value !== ')')
+                    (token.type !== 'PARENTHESIS') ||
+                    (token.type === 'PARENTHESIS' && token.value !== ')')
                 ) {
                     node.params.push(walk());
                     token = tokens[current];
@@ -37,6 +45,7 @@ const parser = (tokens) => {
             }
         }
 
+        // function body node
         if (token.value === '{') {
             token = tokens[++current];
 
@@ -55,6 +64,7 @@ const parser = (tokens) => {
 
         }
 
+        // return node
         if (token.type === 'RETURN') {
             token = tokens[++current];
 
@@ -63,7 +73,6 @@ const parser = (tokens) => {
                 body: []
             };
 
-
             while (
                 (token.type !== 'SEMICOLON') ||
                 (token.type === 'SEMICOLON' && token.value !== ';')
@@ -71,12 +80,13 @@ const parser = (tokens) => {
                 node.body.push(walk());
                 token = tokens[current];
             }
+
             current++;
             return node;
 
         }
 
-
+        // numberLiteral node
         if (token.type === 'NUMBER') {
             current++;
             return {
@@ -88,13 +98,16 @@ const parser = (tokens) => {
         throw new Error(`Unknown type:${token.type}; value: ${token.value}`);
     }
 
+    // root node
     let ast = {
         id: 'Program',
         body: [],
     };
 
+    // while we have nodes execute recursive func
     while (current < tokens.length) {
         var node = walk();
+        // check that walk() do not return null
         if (node) {
             ast.body.push(node);
         }
