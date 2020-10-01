@@ -114,22 +114,23 @@ const lexer = (input) => {
             continue;
         }
 
-        // if (char === 0 && input[++current] === 'x') {
+        // hex number token
+        if (char === '0' && input[++current] === 'x') {
+            char = input[++current];
+            var value = '0x';
 
-        //     var value = '0x';
+            while (NUMBERS.test(char) || LETTERS.test(char)) {
+                value += char;
+                char = input[++current];
+            }
 
-        //     while (NUMBERS.test(char) && LETTERS.test(char)) {
-        //         value += char;
-        //         char = input[++current];
-        //     }
+            tokens.push({
+                type: 'HEX_NUMBER',
+                value: value
+            });
 
-        //     tokens.push({
-        //         type: 'HEX_NUMBER',
-        //         value: value
-        //     });
-
-        //     continue;
-        // }
+            continue;
+        }
 
         // return number token
         if (NUMBERS.test(char)) {

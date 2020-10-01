@@ -112,8 +112,8 @@ const parser = (tokens) => {
                 (token.type !== 'SEMICOLON') ||
                 (token.type === 'SEMICOLON' && token.value !== ';')
             ) {
-                //when in return returned value not number
-                if (token.type !== 'NUMBER') {
+                //when in return returned value not number and not hex number
+                if (token.type !== 'NUMBER' && token.type !== 'HEX_NUMBER') {
                     throw new Error(`Error: Unexpected token. Line: ${line}`);
                 }
 
