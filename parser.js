@@ -1,10 +1,17 @@
 const parser = (tokens) => {
     // index of current token
     var current = 0;
+    let line = 1;
 
     const walk = () => {
         // current token
         var token = tokens[current];
+
+        if (token.type === 'LINEFLAG') {
+            current++;
+            line++;
+            return;
+        }
 
         // function node
         if (token.type === 'TYPE') {
@@ -24,6 +31,12 @@ const parser = (tokens) => {
             // skip main token
             token = tokens[++current];
 
+            // we can not write smth after name of func
+            if (token.type !== 'PARENTHESIS') {
+                token = tokens[++current];
+                throw new Error(`Error: Unexpected token. Line: ${line}`);
+            }
+
             // adding params for func node
             if (
                 token.type === 'PARENTHESIS' &&
@@ -31,6 +44,7 @@ const parser = (tokens) => {
             ) {
 
                 token = tokens[++current];
+
 
                 while (
                     (token.type !== 'PARENTHESIS') ||
@@ -41,6 +55,13 @@ const parser = (tokens) => {
                 }
 
                 current++;
+
+                // we can not write smth after ()
+                if (tokens[current].type !== 'CURLY') {
+                    token = tokens[++current];
+                    throw new Error(`Error: Unexpected token. Line: ${line}`);
+                }
+
                 return node;
             }
         }
@@ -49,13 +70,23 @@ const parser = (tokens) => {
         if (token.value === '{') {
             token = tokens[++current];
 
+
             while (
                 (token.type !== 'CURLY') ||
                 (token.type === 'CURLY' && token.value !== '}')
             ) {
                 //TODO FOR 2 LAB!!!!
-                ast.body[0].body.push(walk());
+                let val = walk();
+                if (val) {
+                    ast.body[0].body.push(val);
+                }
+
                 token = tokens[current];
+            }
+
+            if (token.type === 'CURLY' && token.value === '}' && token[++current]) {
+
+                throw new Error(`Error: Unexpected token. Line: ${line}`);
             }
 
             current++;
@@ -77,11 +108,22 @@ const parser = (tokens) => {
                 (token.type !== 'SEMICOLON') ||
                 (token.type === 'SEMICOLON' && token.value !== ';')
             ) {
+
+                //when in return returned value not number
+                if (token.type !== 'NUMBER') {
+                    throw new Error(`Error: Unexpected token. Line: ${line}`);
+                }
                 node.body.push(walk());
                 token = tokens[current];
             }
 
             current++;
+
+            // when in return < or > 1 returned value
+            if (node.body.length !== 1) {
+                throw new Error(`Error: Unexpected token. Line: ${line}`);
+            }
+
             return node;
 
         }
@@ -94,6 +136,15 @@ const parser = (tokens) => {
                 value: token.value
             };
         }
+
+        // // word node
+        // if (token.type === 'WORD') {
+        //     current++;
+        //     return {
+        //         id: 'word',
+        //         value: token.value
+        //     };
+        // }
 
         throw new Error(`Unknown type:${token.type}; value: ${token.value}`);
     }
@@ -114,6 +165,7 @@ const parser = (tokens) => {
     }
 
     return ast;
+
 }
 
 module.exports = { parser };

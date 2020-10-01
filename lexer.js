@@ -7,23 +7,35 @@ const lexer = (input) => {
 
     // regular expressions for diff cases
     const LETTERS = /[a-zA-Z]/;
-    const NEWLINE = /\n/;
-    const WHITESPACE = /\s/;
-    const NUMBERS = /[0-9]/;
+    const NEWLINE = /\r/;
+    const WHITESPACE = /[\n\t\f\v ]/;
+    const NUMBERS = /[0-9]|\./;
 
     // check all chars in input
     while (current < input.length) {
         var char = input[current];
 
+        //new line
+        if (NEWLINE.test(char)) {
+            current++;
+            tokens.push({
+                type: 'LINEFLAG',
+                value: '\r'
+            });
+            continue;
+        }
+
         // not interested in spaces token, so skip it
-        if (WHITESPACE.test(char) || NEWLINE.test(char)) {
+        if (WHITESPACE.test(char)) {
             current++;
             continue;
         }
 
+
         // return word and some others tokens    
         if (LETTERS.test(char) || char === '_') {
             var value = char;
+            // let rezervWord = treu;
 
             if (++current < input.length) {
                 char = input[current];
@@ -32,6 +44,9 @@ const lexer = (input) => {
                     value += char;
                     char = input[++current];
                 }
+                // if (char === '(') {
+                //     rezervWord = false;
+                // }
             }
 
             // check for standard words of c language
@@ -48,6 +63,12 @@ const lexer = (input) => {
                         value: value
                     });
                     break;
+                case 'float':
+                    tokens.push({
+                        type: 'TYPE',
+                        value: value
+                    });
+                    break;
                 default:
                     tokens.push({
                         type: 'WORD',
@@ -57,6 +78,7 @@ const lexer = (input) => {
 
             continue;
         }
+
 
         // return parenthesis token
         if (char === '(' || char === ')') {
@@ -79,6 +101,23 @@ const lexer = (input) => {
             current++;
             continue;
         }
+
+        // if (char === 0 && input[++current] === 'x') {
+
+        //     var value = '0x';
+
+        //     while (NUMBERS.test(char) && LETTERS.test(char)) {
+        //         value += char;
+        //         char = input[++current];
+        //     }
+
+        //     tokens.push({
+        //         type: 'HEX_NUMBER',
+        //         value: value
+        //     });
+
+        //     continue;
+        // }
 
         // return number token
         if (NUMBERS.test(char)) {

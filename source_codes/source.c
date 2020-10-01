@@ -1,3 +1,3 @@
-int main() {
+float main() {
     return 2;
-}   
+}

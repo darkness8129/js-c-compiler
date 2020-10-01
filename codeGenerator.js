@@ -51,7 +51,6 @@ const codeGenerator = (ast) => {
     // write all asm code in file with separating by \n
     fs.writeFile('generatedCode.asm', asmCode.join('\n'), (err) => {
         if (err) throw err;
-        console.log('The file has been saved!');
     });
 
 }

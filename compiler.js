@@ -7,17 +7,19 @@ fs.readFile('./source_codes/source.c', 'utf-8', (err, input) => {
     if (err === null) {
         // split input code on tokens 
         const tokens = lexerModule.lexer(input);
+        console.log(tokens);
 
-        // build ast
-        let ast = parserModule.parser(tokens);
-
-        // pretty output in console
-        console.log(JSON.stringify(ast, null, 2));
-
-        // generate asm code
-        codeGeneratorModule.codeGenerator(ast);
+        try {
+            let ast = parserModule.parser(tokens);
+            console.log(JSON.stringify(ast, null, 2));
+            // generate asm code
+            codeGeneratorModule.codeGenerator(ast);
+        }
+        catch (err) {
+            console.log(err.message);
+        }
     }
     else {
-        throw new Error(err.message);
+        console.log(new Error(err.message));
     }
 });
