@@ -2,6 +2,9 @@ const lexer = (input) => {
     // current char of input code
     var current = 0;
 
+    // lines of C code
+    let line = 1;
+
     // arr of all tokens
     var tokens = [];
 
@@ -11,17 +14,19 @@ const lexer = (input) => {
     const WHITESPACE = /[\n\t\f\v ]/;
     const NUMBERS = /[0-9]|\./;
 
-    // check all chars in input
     while (current < input.length) {
         var char = input[current];
 
-        //new line
+        // end flag of line
         if (NEWLINE.test(char)) {
+            line++;
             current++;
+
             tokens.push({
                 type: 'LINEFLAG',
                 value: '\r'
             });
+
             continue;
         }
 
@@ -31,11 +36,12 @@ const lexer = (input) => {
             continue;
         }
 
-
         // return word and some others tokens    
         if (LETTERS.test(char) || char === '_') {
             var value = char;
-            // let rezervWord = treu;
+
+            // for checking return int float...
+            let reservedWord = true;
 
             if (++current < input.length) {
                 char = input[current];
@@ -44,41 +50,47 @@ const lexer = (input) => {
                     value += char;
                     char = input[++current];
                 }
-                // if (char === '(') {
-                //     rezervWord = false;
-                // }
+
+                // when variable or func name
+                if (char === '(' || char === ';' || char === '=') {
+                    reservedWord = false;
+                }
             }
 
             // check for standard words of c language
-            switch (value) {
-                case 'return':
-                    tokens.push({
-                        type: 'RETURN',
-                        value: value
-                    });
-                    break
-                case 'int':
-                    tokens.push({
-                        type: 'TYPE',
-                        value: value
-                    });
-                    break;
-                case 'float':
-                    tokens.push({
-                        type: 'TYPE',
-                        value: value
-                    });
-                    break;
-                default:
-                    tokens.push({
-                        type: 'WORD',
-                        value: value
-                    });
+            if (reservedWord === true) {
+                switch (value) {
+                    case 'return':
+                        tokens.push({
+                            type: 'RETURN',
+                            value: value
+                        });
+                        break
+                    case 'int':
+                        tokens.push({
+                            type: 'TYPE',
+                            value: value
+                        });
+                        break;
+                    case 'float':
+                        tokens.push({
+                            type: 'TYPE',
+                            value: value
+                        });
+                        break;
+                    default:
+                        throw Error(`Error! Unknown word! Line:${line}`);
+                }
+            }
+            else {
+                tokens.push({
+                    type: 'WORD',
+                    value: value
+                });
             }
 
             continue;
         }
-
 
         // return parenthesis token
         if (char === '(' || char === ')') {

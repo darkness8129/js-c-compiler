@@ -1,18 +1,18 @@
+//imports 
 const fs = require('fs');
 const codeGeneratorModule = require('./codeGenerator');
 const lexerModule = require('./lexer');
 const parserModule = require('./parser');
 
+//read file
 fs.readFile('./source_codes/source.c', 'utf-8', (err, input) => {
+    //check for errors in reading file
     if (err === null) {
-        // split input code on tokens 
-        const tokens = lexerModule.lexer(input);
-        console.log(tokens);
-
+        //check for errors in compiling
         try {
+            const tokens = lexerModule.lexer(input);
             let ast = parserModule.parser(tokens);
             console.log(JSON.stringify(ast, null, 2));
-            // generate asm code
             codeGeneratorModule.codeGenerator(ast);
         }
         catch (err) {

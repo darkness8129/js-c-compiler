@@ -7,6 +7,7 @@ const parser = (tokens) => {
         // current token
         var token = tokens[current];
 
+        // increment line when we see line flag
         if (token.type === 'LINEFLAG') {
             current++;
             line++;
@@ -28,6 +29,11 @@ const parser = (tokens) => {
                 body: []
             };
 
+            //check having main func
+            if (node.name !== 'main') {
+                throw Error(`Error! You should have main function! Line:${line}`)
+            }
+
             // skip main token
             token = tokens[++current];
 
@@ -44,7 +50,6 @@ const parser = (tokens) => {
             ) {
 
                 token = tokens[++current];
-
 
                 while (
                     (token.type !== 'PARENTHESIS') ||
@@ -70,22 +75,21 @@ const parser = (tokens) => {
         if (token.value === '{') {
             token = tokens[++current];
 
-
             while (
                 (token.type !== 'CURLY') ||
                 (token.type === 'CURLY' && token.value !== '}')
             ) {
                 //TODO FOR 2 LAB!!!!
-                let val = walk();
-                if (val) {
-                    ast.body[0].body.push(val);
+                // for check if node === null
+                let funcVal = walk();
+                if (funcVal) {
+                    ast.body[0].body.push(funcVal);
                 }
 
                 token = tokens[current];
             }
 
             if (token.type === 'CURLY' && token.value === '}' && token[++current]) {
-
                 throw new Error(`Error: Unexpected token. Line: ${line}`);
             }
 
@@ -95,7 +99,7 @@ const parser = (tokens) => {
 
         }
 
-        // return node
+        // return 'return' node
         if (token.type === 'RETURN') {
             token = tokens[++current];
 
@@ -108,22 +112,21 @@ const parser = (tokens) => {
                 (token.type !== 'SEMICOLON') ||
                 (token.type === 'SEMICOLON' && token.value !== ';')
             ) {
-
                 //when in return returned value not number
                 if (token.type !== 'NUMBER') {
                     throw new Error(`Error: Unexpected token. Line: ${line}`);
                 }
+
                 node.body.push(walk());
                 token = tokens[current];
             }
 
-            current++;
-
             // when in return < or > 1 returned value
             if (node.body.length !== 1) {
-                throw new Error(`Error: Unexpected token. Line: ${line}`);
+                throw new Error(`Error: Return construction should return 1 value. Line: ${line}`);
             }
 
+            current++;
             return node;
 
         }
@@ -133,6 +136,15 @@ const parser = (tokens) => {
             current++;
             return {
                 id: 'NumberLiteral',
+                value: token.value
+            };
+        }
+
+        // HexNumberLiteral node
+        if (token.type === 'HEX_NUMBER') {
+            current++;
+            return {
+                id: 'HexNumberLiteral',
                 value: token.value
             };
         }
