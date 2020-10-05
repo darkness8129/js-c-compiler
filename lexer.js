@@ -79,7 +79,7 @@ const lexer = (input) => {
                         });
                         break;
                     default:
-                        throw Error(`Error! Unknown word! Line:${line}`);
+                        throw Error(`Error! Unknown token! Line:${line}`);
                 }
             }
             else {

@@ -3,6 +3,10 @@ const parser = (tokens) => {
     var current = 0;
     let line = 1;
 
+    // types
+    let typeOfFunc,
+        typeOfReturn;
+
     const walk = () => {
         // current token
         var token = tokens[current];
@@ -17,6 +21,7 @@ const parser = (tokens) => {
         // function node
         if (token.type === 'TYPE') {
             var type = token.value;
+            typeOfFunc = type;
 
             // skip type token
             token = tokens[++current];
@@ -28,6 +33,8 @@ const parser = (tokens) => {
                 params: [],
                 body: []
             };
+
+
 
             //check having main func
             if (node.name !== 'main') {
@@ -89,6 +96,7 @@ const parser = (tokens) => {
                 token = tokens[current];
             }
 
+            // we can not write symbols after '}'
             if (token.type === 'CURLY' && token.value === '}' && token[++current]) {
                 throw new Error(`Error: Unexpected token. Line: ${line}`);
             }
@@ -108,13 +116,14 @@ const parser = (tokens) => {
                 body: []
             };
 
+
             while (
                 (token.type !== 'SEMICOLON') ||
                 (token.type === 'SEMICOLON' && token.value !== ';')
             ) {
                 //when in return returned value not number and not hex number
                 if (token.type !== 'NUMBER' && token.type !== 'HEX_NUMBER') {
-                    throw new Error(`Error: Unexpected token. Line: ${line}`);
+                    throw new Error(`Error: Return value should be number. Line: ${line}`);
                 }
 
                 node.body.push(walk());
@@ -123,7 +132,7 @@ const parser = (tokens) => {
 
             // when in return < or > 1 returned value
             if (node.body.length !== 1) {
-                throw new Error(`Error: Return construction should return 1 value. Line: ${line}`);
+                throw new Error(`Error: Return construction should return one value. Line: ${line}`);
             }
 
             current++;
@@ -134,6 +143,18 @@ const parser = (tokens) => {
         // numberLiteral node
         if (token.type === 'NUMBER') {
             current++;
+            if (token.value.indexOf('.') === -1) {
+                typeOfReturn = 'int'
+            }
+            else {
+                typeOfReturn = 'float'
+            }
+
+            // check types
+            if (typeOfFunc === 'int' && typeOfReturn === 'float') {
+                throw new Error(`Error: Return type has not correct type. Line: ${line}`);
+            }
+
             return {
                 id: 'NumberLiteral',
                 value: token.value
@@ -142,6 +163,11 @@ const parser = (tokens) => {
 
         // HexNumberLiteral node
         if (token.type === 'HEX_NUMBER') {
+            //check for normal hex num
+            if (isNaN(parseInt(token.value, 16))) {
+                throw new Error(`Error: Hex number is not valid. Line: ${line}`);
+            }
+
             current++;
             return {
                 id: 'HexNumberLiteral',

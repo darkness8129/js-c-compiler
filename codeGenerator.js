@@ -11,26 +11,29 @@ const codeGenerator = (ast) => {
     const header =
         '.386\n' +
         '.model flat, stdcall\n' +
+        'include \\masm32\\include\\kernel32.inc\n' +
+        'include \\masm32\\include\\user32.inc\n' +
+        'includelib \\masm32\\lib\\kernel32.lib\n' +
+        'includelib \\masm32\\lib\\user32.lib\n'
+
+    // data of asm code
+    const data =
         '.data\n' +
-        '.code\n'
+        '\tCaption db "IV-81 Yukhymchuk LAB_1", 0\n' +
+        `\tText db "Result:", 13, 10, "${returnNum}", 0\n`
 
-    // main proc of asm code
-    const mainProc =
-        'main PROC\n' +
-        `\tmov eax, ${returnNum}\n` +
-        '\tret\n' +
-        'main ENDP\n'
-
-    // start func of asm code
-    const startFunc =
-        '_start:\n' +
-        '\tinvoke main\n' +
-        '\tinvoke ExitProcess, 0\n'
+    // code of asm code
+    const code =
+        '.code\n' +
+        'start:\n' +
+        '\tinvoke MessageBoxA, 0, ADDR Text, ADDR Caption, 0\n' +
+        '\tinvoke ExitProcess, 0\n' +
+        'end start'
 
     // push all parts of asm code in arr
     asmCode.push(header);
-    asmCode.push(mainProc);
-    asmCode.push(startFunc);
+    asmCode.push(data);
+    asmCode.push(code);
 
     // recursion func to get value of return
     function walk(node) {
@@ -44,12 +47,15 @@ const codeGenerator = (ast) => {
             return walk(...node.body);
         }
         else if (node.id === 'NumberLiteral') {
-            return node.value;
+            return parseInt(node.value, 10);
+        }
+        else if (node.id === 'HexNumberLiteral') {
+            return parseInt(node.value, 16);
         }
     }
 
     // write all asm code in file with separating by \n
-    fs.writeFile('generatedCode.asm', asmCode.join('\n'), (err) => {
+    fs.writeFile('./1-27-JavaScript-ІВ-81-Юхимчук.asm', asmCode.join('\n'), (err) => {
         if (err) throw err;
     });
 

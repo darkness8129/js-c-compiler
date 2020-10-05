@@ -1,11 +1,11 @@
 //imports 
 const fs = require('fs');
+const readline = require('readline');
 const codeGeneratorModule = require('./codeGenerator');
 const lexerModule = require('./lexer');
 const parserModule = require('./parser');
 
-//read file
-fs.readFile('./source_codes/source.c', 'utf-8', (err, input) => {
+fs.readFile('./1-27-JavaScript-ІВ-81-Юхимчук.c', 'utf-8', (err, input) => {
     //check for errors in reading file
     if (err === null) {
         //check for errors in compiling
@@ -18,6 +18,17 @@ fs.readFile('./source_codes/source.c', 'utf-8', (err, input) => {
         catch (err) {
             console.log(err.message);
         }
+
+        // enter to close console
+        const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout
+        });
+
+        rl.question("Press ENTER to continue... ", () => {
+            rl.close();
+        });
+        //------------------------
     }
     else {
         console.log(new Error(err.message));

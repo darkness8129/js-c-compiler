@@ -1,0 +1,15 @@
+{
+    "name": "compiler",
+    "version": "1.0.0",
+    "description": "My C compiler.",
+    "main": "compiler.js",
+    "dependencies": {},
+    "devDependencies": {},
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "node compiler.js",
+        "build": "nexe compiler.js -r codeGenerator.js lexer.js parser.js"
+    },
+    "author": "Yaroslav Yukhymchuk",
+    "license": "ISC"
+}
