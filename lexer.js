@@ -51,8 +51,18 @@ const lexer = (input) => {
                     char = input[++current];
                 }
 
+                // whitespace does not ++ value so i do it here
+                if (char === ' ') {
+                    char = input[++current];
+                }
+
                 // when variable or func name
-                if (char === '(' || char === ';' || char === '=') {
+                console.log(char);
+
+                if (char === '(' || char === ';'
+                    || char === '=' || char === '^'
+                    || char === '*' || char === '/'
+                    || char === '!') {
                     reservedWord = false;
                 }
             }
@@ -142,6 +152,11 @@ const lexer = (input) => {
                 char = input[++current];
             }
 
+            // if first 0
+            if (value[0] === '0') {
+                char = input[--current];
+            }
+
             tokens.push({
                 type: 'NUMBER',
                 value: value
@@ -155,6 +170,61 @@ const lexer = (input) => {
             tokens.push({
                 type: 'SEMICOLON',
                 value: ';'
+            });
+
+            current++;
+            continue;
+        }
+
+        // return logical not token
+        if (char === '!') {
+            tokens.push({
+                type: 'LOGICAL_NEGATION',
+                value: '!'
+            });
+
+            current++;
+            continue;
+        }
+
+        // division token
+        if (char === '*') {
+            tokens.push({
+                type: 'MUL_OPERATION',
+                value: '*'
+            });
+
+            current++;
+            continue;
+        }
+
+        // XOR token
+        if (char === '^') {
+            tokens.push({
+                type: 'XOR_OPERATION',
+                value: '^'
+            });
+
+            current++;
+            continue;
+        }
+
+        // division token
+        if (char === '/') {
+            tokens.push({
+                type: 'DIV_OPERATION',
+                value: '/'
+            });
+
+            current++;
+            continue;
+        }
+
+        // assign token
+        if (char === '=') {
+            tokens.push({
+                type: 'ASSIGN',
+                value: '='
             });
 
             current++;

@@ -17,9 +17,9 @@ const parser = (tokens) => {
             line++;
             return;
         }
-
         // function node
-        if (token.type === 'TYPE') {
+        // need second check because we have types in func also
+        if (token.type === 'TYPE' && tokens[current + 1].value === 'main') {
             var type = token.value;
             typeOfFunc = type;
 
@@ -33,8 +33,6 @@ const parser = (tokens) => {
                 params: [],
                 body: []
             };
-
-
 
             //check having main func
             if (node.name !== 'main') {
@@ -116,23 +114,40 @@ const parser = (tokens) => {
                 body: []
             };
 
-
             while (
                 (token.type !== 'SEMICOLON') ||
                 (token.type === 'SEMICOLON' && token.value !== ';')
             ) {
                 //when in return returned value not number and not hex number
-                if (token.type !== 'NUMBER' && token.type !== 'HEX_NUMBER') {
-                    throw new Error(`Error: Return value should be number. Line: ${line}`);
-                }
+                // if (token.type !== 'NUMBER' &&
+                //     token.type !== 'HEX_NUMBER' &&
+                //     token.type !== 'LOGICAL_NEGATION' &&
+                //     token.type !== 'PARENTHESIS' &&
+                //     token.type !== 'MUL_OPERATION') {
+                //     throw new Error(`Error: Return value should be number. Line: ${line}`);
+                // }
 
                 node.body.push(walk());
                 token = tokens[current];
             }
 
-            // when in return < or > 1 returned value
-            if (node.body.length !== 1) {
-                throw new Error(`Error: Return construction should return one value. Line: ${line}`);
+            // // when in return < or > 1 returned value
+            // if (node.body.length !== 1) {
+            //     throw new Error(`Error: Return construction should return one value. Line: ${line}`);
+            // }
+
+            //number of ( === number of )
+            if (node.body.filter(node => node.value === '(').length !==
+                node.body.filter(node => node.value === ')').length
+            ) {
+                throw new Error(`Error: Unexpected token. Line: ${line}`);
+            }
+
+            // can not be **
+            for (let i = 0; i < node.body.length; i++) {
+                if (node.body[i].value === '*' && node.body[i + 1].value === '*') {
+                    throw new Error(`Error: Unexpected token. Line: ${line}`);
+                }
             }
 
             current++;
@@ -175,14 +190,93 @@ const parser = (tokens) => {
             };
         }
 
-        // // word node
-        // if (token.type === 'WORD') {
-        //     current++;
-        //     return {
-        //         id: 'word',
-        //         value: token.value
-        //     };
-        // }
+        // Logical negation node
+        if (token.type === 'LOGICAL_NEGATION') {
+
+            current++;
+            return {
+                id: 'LogicalNegation',
+                value: token.value
+            };
+        }
+
+        // Logical negation node
+        if (token.type === 'PARENTHESIS') {
+
+            current++;
+            return {
+                id: 'Brace',
+                value: token.value
+            };
+        }
+
+        // Logical negation node
+        if (token.type === 'MUL_OPERATION') {
+
+            current++;
+            return {
+                id: 'MultiplicationOperation',
+                value: token.value
+            };
+        }
+
+        // div node
+        if (token.type === 'DIV_OPERATION') {
+
+            current++;
+            return {
+                id: 'DivisionOperation',
+                value: token.value
+            };
+        }
+
+        // XOR node
+        if (token.type === 'XOR_OPERATION') {
+
+            current++;
+            return {
+                id: 'XOROperation',
+                value: token.value
+            };
+        }
+
+        // assign node
+        if (token.type === 'ASSIGN') {
+
+            current++;
+            return {
+                id: 'Assign',
+                value: token.value
+            };
+        }
+
+        // word node
+        if (token.type === 'WORD') {
+            current++;
+            return {
+                id: 'word',
+                value: token.value
+            };
+        }
+
+        // type node
+        if (token.type === 'TYPE') {
+            current++;
+            return {
+                id: 'type',
+                value: token.value
+            };
+        }
+
+
+        // semicolon node
+        if (token.type === 'SEMICOLON') {
+            current++;
+            return {
+                id: 'semicolon',
+                value: token.value
+            };
+        }
 
         throw new Error(`Unknown type:${token.type}; value: ${token.value}`);
     }
@@ -207,3 +301,4 @@ const parser = (tokens) => {
 }
 
 module.exports = { parser };
+

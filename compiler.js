@@ -5,18 +5,20 @@ const codeGeneratorModule = require('./codeGenerator');
 const lexerModule = require('./lexer');
 const parserModule = require('./parser');
 
-fs.readFile('./1-27-JavaScript-ІВ-81-Юхимчук.c', 'utf-8', (err, input) => {
+fs.readFile('./2-27-JavaScript-ІВ-81-Юхимчук.c', 'utf-8', (err, input) => {
     //check for errors in reading file
     if (err === null) {
         //check for errors in compiling
         try {
             const tokens = lexerModule.lexer(input);
+            console.log(tokens);
+
             let ast = parserModule.parser(tokens);
             console.log(JSON.stringify(ast, null, 2));
             codeGeneratorModule.codeGenerator(ast);
         }
         catch (err) {
-            console.log(err.message);
+            console.log(err);
         }
 
         // enter to close console

@@ -4,11 +4,13 @@
     "description": "My C compiler.",
     "main": "compiler.js",
     "dependencies": {},
-    "devDependencies": {},
+    "devDependencies": {
+        "nexe": "^3.3.7"
+    },
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "start": "node compiler.js",
-        "build": "nexe compiler.js -r codeGenerator.js lexer.js parser.js"
+        "build": "nexe compiler.js -r ./*.js"
     },
     "author": "Yaroslav Yukhymchuk",
     "license": "ISC"
