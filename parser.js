@@ -102,7 +102,6 @@ const parser = (tokens) => {
             current++;
 
             return node;
-
         }
 
         // return 'return' node
@@ -250,22 +249,62 @@ const parser = (tokens) => {
             };
         }
 
-        // word node
+        // word node when expression
+        if (token.type === 'WORD' && tokens[current - 1].type !== 'TYPE' && tokens[current + 1].value === '=') {
+            var node = {
+                id: 'expressionWithoutType',
+                body: [],
+            };
+            // because we skip one node
+            node.body.push({ id: 'word', value: token.value });
+
+            current++;
+
+            while (
+                (token.type !== 'SEMICOLON') ||
+                (token.type === 'SEMICOLON' && token.value !== ';')
+            ) {
+                node.body.push(walk());
+                token = tokens[current];
+
+            }
+            current++;
+            return node;
+
+        }
+
+        // simple node node
         if (token.type === 'WORD') {
+
+            console.log('here2');
+
             current++;
             return {
                 id: 'word',
                 value: token.value
             };
+
         }
 
         // type node
-        if (token.type === 'TYPE') {
+        if (token.type === 'TYPE' && tokens[current + 1].value !== 'main') {
             current++;
-            return {
-                id: 'type',
-                value: token.value
+            var node = {
+                id: 'expressionWithType',
+                type: token.value,
+                body: [],
             };
+
+            while (
+                (token.type !== 'SEMICOLON') ||
+                (token.type === 'SEMICOLON' && token.value !== ';')
+            ) {
+                node.body.push(walk());
+                token = tokens[current];
+
+            }
+            current++;
+            return node;
         }
 
 
