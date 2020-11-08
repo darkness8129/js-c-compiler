@@ -130,11 +130,6 @@ const parser = (tokens) => {
                 token = tokens[current];
             }
 
-            // // when in return < or > 1 returned value
-            // if (node.body.length !== 1) {
-            //     throw new Error(`Error: Return construction should return one value. Line: ${line}`);
-            // }
-
             //number of ( === number of )
             if (node.body.filter(node => node.value === '(').length !==
                 node.body.filter(node => node.value === ')').length
@@ -253,10 +248,9 @@ const parser = (tokens) => {
         if (token.type === 'WORD' && tokens[current - 1].type !== 'TYPE' && tokens[current + 1].value === '=') {
             var node = {
                 id: 'expressionWithoutType',
-                body: [],
+                variable: token.value,
+                expression: [],
             };
-            // because we skip one node
-            node.body.push({ id: 'word', value: token.value });
 
             current++;
 
@@ -264,26 +258,21 @@ const parser = (tokens) => {
                 (token.type !== 'SEMICOLON') ||
                 (token.type === 'SEMICOLON' && token.value !== ';')
             ) {
-                node.body.push(walk());
+                node.expression.push(walk());
                 token = tokens[current];
-
             }
             current++;
-            return node;
+            return { ...node, expression: node.expression.filter((elem) => elem.id !== 'Assign') };
 
         }
 
         // simple node node
         if (token.type === 'WORD') {
-
-            console.log('here2');
-
             current++;
             return {
                 id: 'word',
                 value: token.value
             };
-
         }
 
         // type node
@@ -292,21 +281,32 @@ const parser = (tokens) => {
             var node = {
                 id: 'expressionWithType',
                 type: token.value,
-                body: [],
+                variable: tokens[current].value,
+                expression: [],
             };
+
+            token = tokens[++current];
 
             while (
                 (token.type !== 'SEMICOLON') ||
                 (token.type === 'SEMICOLON' && token.value !== ';')
             ) {
-                node.body.push(walk());
+                node.expression.push(walk());
                 token = tokens[current];
 
             }
             current++;
-            return node;
-        }
 
+            if (node.expression.length === 0) {
+                return {
+                    id: 'declaration',
+                    type: node.type,
+                    variable: node.variable
+                }
+            }
+
+            return { ...node, expression: node.expression.filter((elem) => elem.id !== 'Assign') };
+        }
 
         // semicolon node
         if (token.type === 'SEMICOLON') {
