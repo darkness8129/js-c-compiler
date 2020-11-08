@@ -88,50 +88,99 @@ const generateExprAsmCode = (expressions) => {
 }
 
 // to fix problems with eax
-const fixAsmCode = (asmCode) => {
-    for (let i = 0; i < asmCode.length; i++) {
-        //if we have this command
-        if (asmCode[i] === 'invoke multiply, eax, eax') {
-            //replace this 
-            asmCode[i] = 'invoke multiply, ebx, eax';
+// const fixAsmCode = (asmCode) => {
+//     for (let i = 0; i < asmCode.length; i++) {
+//         //if we have this command
+//         if (asmCode[i] === 'invoke multiply, eax, eax') {
+//             //replace this 
+//             asmCode[i] = 'invoke multiply, ebx, eax';
 
-            // paste one pos before this 
-            asmCode.splice(i - 1, 0, 'mov ebx, eax')
-            //recursion
-            asmCode = fixAsmCode(asmCode);
-            break;
+//             // paste one pos before this 
+//             asmCode.splice(i - 1, 0, 'mov ebx, eax')
+//             //recursion
+//             asmCode = fixAsmCode(asmCode);
+//             break;
+//         }
+//     }
+
+//     // return fixed asm code
+//     return asmCode
+// }
+
+const getVariables = (funcBody) => {
+    const variables = [];
+
+    funcBody.map(elem => {
+        if (elem.id === 'declaration') {
+            variables.push({ variable: elem.variable, type: elem.type, isDeclared: true });
         }
-    }
+        else if (elem.id === 'expressionWithType') {
+            variables.push({ variable: elem.variable, type: elem.type, isDeclared: true, isInitialized: true });
+        }
+        else if (elem.id === 'expressionWithoutType') {
+            const isVariable = variables.some((variable) => {
+                return variable.variable === elem.variable;
+            })
+            if (isVariable) {
+                variables.map((variable) => {
+                    if (variable.variable === elem.variable) {
+                        variable.isInitialized = true;
+                    }
+                })
+            } else {
+                throw new Error(`Variable ${elem.variable} is not declared!`);
+            }
+        }
+    })
 
-    // return fixed asm code
-    return asmCode
+    return variables;
+}
+
+const getReturnExpr = (funcBody) => {
+    return funcBody[funcBody.length - 1].body
+        .map(node => {
+            if (node.id === 'NumberLiteral') {
+                return `${parseInt(node.value, 10)}`;
+            }
+            else if (node.id === 'Brace') {
+                return node.value;
+            }
+            else if (node.id === 'word') {
+                return node.value;
+            }
+            else if (node.id === 'XOROperation') {
+                return node.value;
+            }
+            else if (node.id === 'DivideOperation') {
+                return node.value;
+            }
+            else if (node.id === 'HexNumberLiteral') {
+                return `${parseInt(node.value, 16)}`;
+            }
+            else if (node.id === 'LogicalNegation') {
+                return node.value;
+            }
+            else if (node.id === 'MultiplicationOperation') {
+                return node.value;
+            }
+        });
 }
 
 const codeGenerator = (ast) => {
     //all asm code
     const asmCode = [];
-
+    // func body
+    const FuncBody = walk(ast);
     // return expression
-    const returnExpression = walk(ast).map(node => {
-        if (node.id === 'NumberLiteral') {
-            return `${parseInt(node.value, 10)}`;
-        }
-        if (node.id === 'Brace') {
-            return node.value;
-        }
-        else if (node.id === 'HexNumberLiteral') {
-            return `${parseInt(node.value, 16)}`;
-        }
-        else if (node.id === 'LogicalNegation') {
-            return node.value;
-        }
-        else if (node.id === 'MultiplicationOperation') {
-            return node.value;
-        }
-    });
+    const returnExpression = getReturnExpr(FuncBody);
+    // variables
+    const variables = getVariables(FuncBody);
+    console.log(returnExpression);
+    console.log(FuncBody);
+    console.log(variables);
 
     // asm code of return 
-    const calcExpression = fixAsmCode(generateExprAsmCode(returnExpression));
+    //!!!!!!!const calcExpression = fixAsmCode(generateExprAsmCode(returnExpression));
 
     const includes = `
 include \\masm32\\include\\windows.inc
@@ -156,12 +205,20 @@ ${includes}
     const data = '.data';
 
     const multiply = `
-multiply proc num1: DWORD, num2: DWORD
+multiply proc num1:DWORD, num2:DWORD
     mov eax, num1
     cdq
     imul num2
     ret
 multiply endp`
+
+    const divide = `
+divide proc num1:DWORD, num2:DWORD
+  mov eax, num1
+  cdq
+  idiv num2
+  ret
+divide endp`
 
     const negation = `
 negation proc num1: DWORD
@@ -222,9 +279,6 @@ end start`
             return walk(...node.body);
         }
         else if (node.id === 'Function' && node.name === 'main') {
-            return walk(...node.body);
-        }
-        else if (node.id === 'Return') {
             return [...node.body];
         }
     }

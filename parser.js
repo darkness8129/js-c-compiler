@@ -219,7 +219,7 @@ const parser = (tokens) => {
 
             current++;
             return {
-                id: 'DivisionOperation',
+                id: 'DivideOperation',
                 value: token.value
             };
         }
@@ -293,7 +293,6 @@ const parser = (tokens) => {
             ) {
                 node.expression.push(walk());
                 token = tokens[current];
-
             }
             current++;
 

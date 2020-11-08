@@ -57,8 +57,6 @@ const lexer = (input) => {
                 }
 
                 // when variable or func name
-                console.log(char);
-
                 if (char === '(' || char === ';'
                     || char === '=' || char === '^'
                     || char === '*' || char === '/'
