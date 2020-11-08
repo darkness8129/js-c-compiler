@@ -135,6 +135,37 @@ const generateExprAsmCode = (expressions) => {
             break;
         }
 
+        // XOR
+        for (let i = 0; i < expressions.length; i++) {
+            if (expressions[i] === '^') {
+
+                if ((expressions[i - 1] === 'eax') && (expressions[i + 1] === 'eax')) {
+                    asmCode.push(`pop ebx`);
+                    asmCode.push(`pop eax`);
+                    asmCode.push(`invoke xorOperation, eax, ebx`)
+                }
+                else if ((expressions[i - 1] === 'eax') || (expressions[i + 1] === 'eax')) {
+                    asmCode.push(`pop eax`);
+                    asmCode.push(`invoke xorOperation, ${expressions[i - 1]}, ${expressions[i + 1]}`);
+                }
+                else {
+                    asmCode.push(`invoke xorOperation, ${expressions[i - 1]}, ${expressions[i + 1]}`);
+                }
+
+                asmCode.push(`push eax`);
+
+                // num operation num replace on eax
+                expressions.splice(i - 1, 3, 'eax');
+
+                // recursion
+                asmCode.push(
+                    ...generateExprAsmCode(
+                        expressions
+                    )
+                );
+                break;
+            }
+        }
     }
 
     //return arr of commands 
@@ -273,6 +304,12 @@ divide proc num1:DWORD, num2:DWORD
   idiv num2
   ret
 divide endp`
+    const xorOperation = `
+xorOperation proc num1:DWORD, num2:DWORD
+  mov eax, num1
+  xor eax, num2
+  ret
+xorOperation endp`
 
     const negation = `
 negation proc num1: DWORD
@@ -311,6 +348,7 @@ start:
     exit
 ${multiply} 
 ${divide}
+${xorOperation}
 ${negation}
 ${mainProc}
 end start`

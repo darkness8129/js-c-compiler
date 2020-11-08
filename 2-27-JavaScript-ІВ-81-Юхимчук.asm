@@ -38,6 +38,12 @@ divide proc num1:DWORD, num2:DWORD
   ret
 divide endp
 
+xorOperation proc num1:DWORD, num2:DWORD
+  mov eax, num1
+  xor eax, num2
+  ret
+xorOperation endp
+
 negation proc num1: DWORD
     cmp num1, 0
     je equal
@@ -57,17 +63,17 @@ main proc
 
     invoke negation, 0
 	push eax
+	invoke xorOperation, 3, 12
+	push eax
 	invoke divide, 4, 1
 	push eax
 	pop ebx
 	pop eax
 	invoke multiply, eax, ebx
 	push eax
+	pop ebx
 	pop eax
-	invoke multiply, eax, 3
-	push eax
-	pop eax
-	invoke multiply, eax, 2
+	invoke multiply, eax, ebx
 	push eax
 
     pop eax
