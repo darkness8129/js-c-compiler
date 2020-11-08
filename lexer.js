@@ -143,17 +143,21 @@ const lexer = (input) => {
         // return number token
         if (NUMBERS.test(char)) {
             var value = '';
+            //char = input[current];
 
             // need while if in number more than one digit
             while (NUMBERS.test(char)) {
                 value += char;
+                if (value[0] === '0') {
+                    char = input[--current];
+                }
                 char = input[++current];
             }
 
             // if first 0
-            if (value[0] === '0') {
-                char = input[--current];
-            }
+            // if (value[0] === '0') {
+            //     char = input[--current];
+            // }
 
             tokens.push({
                 type: 'NUMBER',

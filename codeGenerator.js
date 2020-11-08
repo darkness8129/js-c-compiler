@@ -34,17 +34,24 @@ const generateExprAsmCode = (expressions) => {
         }
     }
 
+    // NEGATION
     for (let i = 0; i < expressions.length; i++) {
         if (expressions[i] === '!') {
             //first number after !+number
-            var number = expressions.join('').match(/\d+|eax/)[0];
+
+            var number = expressions.slice(i).join('').match(/\d+|eax/)[0];
             var numberIndex = expressions.indexOf(number);
 
             // !..!
             let negations = expressions.slice(i, numberIndex);
 
+            console.log(negations.length);
+
+            if ((expressions[i + negations.length] === 'eax') || (expressions[i + negations.length] === 'ebx')) {
+                asmCode.push(`pop ${expressions[i + negations.length]}`);
+            }
             // if even - two commands, else - one
-            if (negations.length % 2 === 0) {
+            if (negations.length % 2 === 0 && negations.length !== 0) {
                 asmCode.push(`invoke negation, ${expressions[i + negations.length]}`);
                 asmCode.push(`invoke negation, eax`);
             }
@@ -52,8 +59,12 @@ const generateExprAsmCode = (expressions) => {
                 asmCode.push(`invoke negation, ${expressions[i + negations.length]}`);
             }
 
+            asmCode.push(`push eax`);
+
             // replace !!...number on eax
             expressions.splice(i, negations.length + 1, 'eax');
+            console.log(expressions);
+
 
             // recursion if !(...)
             asmCode.push(
@@ -65,10 +76,24 @@ const generateExprAsmCode = (expressions) => {
         }
     }
 
+    // MULTIPLY AND DIVISION
     for (let i = 0; i < expressions.length; i++) {
         if (expressions[i] === '*') {
-            //command with previous num operation and next num
-            asmCode.push(`invoke multiply, ${expressions[i - 1]}, ${expressions[i + 1]}`)
+
+            if ((expressions[i - 1] === 'eax') && (expressions[i + 1] === 'eax')) {
+                asmCode.push(`pop ebx`);
+                asmCode.push(`pop eax`);
+                asmCode.push(`invoke multiply, eax, ebx`)
+            }
+            else if ((expressions[i - 1] === 'eax') || (expressions[i + 1] === 'eax')) {
+                asmCode.push(`pop eax`);
+                asmCode.push(`invoke multiply, ${expressions[i - 1]}, ${expressions[i + 1]}`);
+            }
+            else {
+                asmCode.push(`invoke multiply, ${expressions[i - 1]}, ${expressions[i + 1]}`);
+            }
+
+            asmCode.push(`push eax`);
 
             // num operation num replace on eax
             expressions.splice(i - 1, 3, 'eax');
@@ -81,6 +106,35 @@ const generateExprAsmCode = (expressions) => {
             );
             break;
         }
+        else if (expressions[i] === '/') {
+
+            if ((expressions[i - 1] === 'eax') && (expressions[i + 1] === 'eax')) {
+                asmCode.push(`pop ebx`);
+                asmCode.push(`pop eax`);
+                asmCode.push(`invoke divide, eax, ebx`)
+            }
+            else if ((expressions[i - 1] === 'eax') || (expressions[i + 1] === 'eax')) {
+                asmCode.push(`pop eax`);
+                asmCode.push(`invoke divide, ${expressions[i - 1]}, ${expressions[i + 1]}`);
+            }
+            else {
+                asmCode.push(`invoke divide, ${expressions[i - 1]}, ${expressions[i + 1]}`);
+            }
+
+            asmCode.push(`push eax`);
+
+            // num operation num replace on eax
+            expressions.splice(i - 1, 3, 'eax');
+
+            // recursion
+            asmCode.push(
+                ...generateExprAsmCode(
+                    expressions
+                )
+            );
+            break;
+        }
+
     }
 
     //return arr of commands 
@@ -175,12 +229,12 @@ const codeGenerator = (ast) => {
     const returnExpression = getReturnExpr(FuncBody);
     // variables
     const variables = getVariables(FuncBody);
-    console.log(returnExpression);
-    console.log(FuncBody);
-    console.log(variables);
+    // console.log(returnExpression);
+    // console.log(FuncBody);
+    // console.log(variables);
 
     // asm code of return 
-    //!!!!!!!const calcExpression = fixAsmCode(generateExprAsmCode(returnExpression));
+    const calcExpression = generateExprAsmCode(returnExpression);
 
     const includes = `
 include \\masm32\\include\\windows.inc
@@ -238,20 +292,12 @@ negation endp`
 
     const mainProc = `
 main proc
-    push eax
-    push ebx
-    push ecx
-    push edx
 
     ${calcExpression.join('\n\t')}
 
+    pop eax
     print str$(eax)
     print chr$(13, 10)
-
-    pop edx
-    pop ecx
-    pop ebx
-    pop eax
 
     ret
     main endp`
@@ -264,6 +310,7 @@ start:
     mov eax, input("ENTER to continue. . . ")
     exit
 ${multiply} 
+${divide}
 ${negation}
 ${mainProc}
 end start`

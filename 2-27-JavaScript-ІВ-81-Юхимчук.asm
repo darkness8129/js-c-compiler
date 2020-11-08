@@ -24,12 +24,19 @@ start:
     mov eax, input("ENTER to continue. . . ")
     exit
 
-multiply proc num1: DWORD, num2: DWORD
+multiply proc num1:DWORD, num2:DWORD
     mov eax, num1
     cdq
     imul num2
     ret
 multiply endp 
+
+divide proc num1:DWORD, num2:DWORD
+  mov eax, num1
+  cdq
+  idiv num2
+  ret
+divide endp
 
 negation proc num1: DWORD
     cmp num1, 0
@@ -47,23 +54,25 @@ negation proc num1: DWORD
 negation endp
 
 main proc
-    push eax
-    push ebx
-    push ecx
-    push edx
 
-    invoke multiply, 7, 1
-	mov ebx, eax
-	invoke negation, 0
-	invoke multiply, ebx, eax
+    invoke negation, 0
+	push eax
+	invoke divide, 4, 1
+	push eax
+	pop ebx
+	pop eax
+	invoke multiply, eax, ebx
+	push eax
+	pop eax
+	invoke multiply, eax, 3
+	push eax
+	pop eax
+	invoke multiply, eax, 2
+	push eax
 
+    pop eax
     print str$(eax)
     print chr$(13, 10)
-
-    pop edx
-    pop ecx
-    pop ebx
-    pop eax
 
     ret
     main endp
