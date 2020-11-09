@@ -45,8 +45,6 @@ const generateExprAsmCode = (expressions) => {
             // !..!
             let negations = expressions.slice(i, numberIndex);
 
-            console.log(negations.length);
-
             if ((expressions[i + negations.length] === 'eax') || (expressions[i + negations.length] === 'ebx')) {
                 asmCode.push(`pop ${expressions[i + negations.length]}`);
             }
@@ -63,8 +61,6 @@ const generateExprAsmCode = (expressions) => {
 
             // replace !!...number on eax
             expressions.splice(i, negations.length + 1, 'eax');
-            console.log(expressions);
-
 
             // recursion if !(...)
             asmCode.push(
@@ -135,36 +131,38 @@ const generateExprAsmCode = (expressions) => {
             break;
         }
 
-        // XOR
-        for (let i = 0; i < expressions.length; i++) {
-            if (expressions[i] === '^') {
 
-                if ((expressions[i - 1] === 'eax') && (expressions[i + 1] === 'eax')) {
-                    asmCode.push(`pop ebx`);
-                    asmCode.push(`pop eax`);
-                    asmCode.push(`invoke xorOperation, eax, ebx`)
-                }
-                else if ((expressions[i - 1] === 'eax') || (expressions[i + 1] === 'eax')) {
-                    asmCode.push(`pop eax`);
-                    asmCode.push(`invoke xorOperation, ${expressions[i - 1]}, ${expressions[i + 1]}`);
-                }
-                else {
-                    asmCode.push(`invoke xorOperation, ${expressions[i - 1]}, ${expressions[i + 1]}`);
-                }
+    }
 
-                asmCode.push(`push eax`);
+    // XOR
+    for (let i = 0; i < expressions.length; i++) {
+        if (expressions[i] === '^') {
 
-                // num operation num replace on eax
-                expressions.splice(i - 1, 3, 'eax');
-
-                // recursion
-                asmCode.push(
-                    ...generateExprAsmCode(
-                        expressions
-                    )
-                );
-                break;
+            if ((expressions[i - 1] === 'eax') && (expressions[i + 1] === 'eax')) {
+                asmCode.push(`pop ebx`);
+                asmCode.push(`pop eax`);
+                asmCode.push(`invoke xorOperation, eax, ebx`)
             }
+            else if ((expressions[i - 1] === 'eax') || (expressions[i + 1] === 'eax')) {
+                asmCode.push(`pop eax`);
+                asmCode.push(`invoke xorOperation, ${expressions[i - 1]}, ${expressions[i + 1]}`);
+            }
+            else {
+                asmCode.push(`invoke xorOperation, ${expressions[i - 1]}, ${expressions[i + 1]}`);
+            }
+
+            asmCode.push(`push eax`);
+
+            // num operation num replace on eax
+            expressions.splice(i - 1, 3, 'eax');
+
+            // recursion
+            asmCode.push(
+                ...generateExprAsmCode(
+                    expressions
+                )
+            );
+            break;
         }
     }
 
@@ -260,7 +258,7 @@ const codeGenerator = (ast) => {
     const returnExpression = getReturnExpr(FuncBody);
     // variables
     const variables = getVariables(FuncBody);
-    // console.log(returnExpression);
+    //console.log(returnExpression);
     // console.log(FuncBody);
     // console.log(variables);
 

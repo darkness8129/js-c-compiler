@@ -1,3 +1,3 @@
 int main(){
-    return 4/1*!0*3^12;
+    return 12^4*!3*1/1;
 }

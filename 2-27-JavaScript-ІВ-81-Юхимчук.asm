@@ -61,19 +61,19 @@ negation endp
 
 main proc
 
-    invoke negation, 0
+    invoke negation, 3
 	push eax
-	invoke xorOperation, 3, 12
-	push eax
-	invoke divide, 4, 1
-	push eax
-	pop ebx
 	pop eax
-	invoke multiply, eax, ebx
+	invoke multiply, 4, eax
 	push eax
-	pop ebx
 	pop eax
-	invoke multiply, eax, ebx
+	invoke multiply, eax, 1
+	push eax
+	pop eax
+	invoke divide, eax, 1
+	push eax
+	pop eax
+	invoke xorOperation, 12, eax
 	push eax
 
     pop eax
