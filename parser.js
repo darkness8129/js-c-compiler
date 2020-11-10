@@ -3,6 +3,35 @@ const parser = (tokens) => {
     var current = 0;
     let line = 1;
 
+    //func for checking errors with variables
+
+    const checkErrWithVar = (exp) => {
+        const LETTERS = /[a-zA-Z]/;
+        for (let i = 0; i < exp.length; i++) {
+            if (LETTERS.test(exp[i])) {
+                let flag1 = ast.body[0].body.some(elem => {
+                    if (elem.id === 'expressionWithType' || elem.id === 'declaration') {
+                        return elem.variable === exp[i];
+                    }
+                });
+
+                let flag2 = ast.body[0].body.some(elem => {
+                    if (elem.id === 'expressionWithoutType' || elem.id === 'expressionWithType') {
+                        return elem.variable === exp[i];
+                    }
+                });
+
+                if (!flag1) {
+                    throw new Error(`Error: Variable ${exp[i]} is not declared. Line: ${line}`);
+                }
+
+                if (!flag2) {
+                    throw new Error(`Error: Variable ${exp[i]} is not initialized. Line: ${line}`);
+                }
+            }
+        }
+    }
+
     // types
     let typeOfFunc,
         typeOfReturn;
@@ -84,7 +113,6 @@ const parser = (tokens) => {
                 (token.type !== 'CURLY') ||
                 (token.type === 'CURLY' && token.value !== '}')
             ) {
-                //TODO FOR 2 LAB!!!!
                 // for check if node === null
                 let funcVal = walk();
                 if (funcVal) {
@@ -97,6 +125,16 @@ const parser = (tokens) => {
             // we can not write symbols after '}'
             if (token.type === 'CURLY' && token.value === '}' && token[++current]) {
                 throw new Error(`Error: Unexpected token. Line: ${line}`);
+            }
+
+            // check we have return or not 
+            const returnFlag = ast.body[0].body.some((node) => {
+                return node.id === 'Return';
+            });
+
+            // when we do not have return
+            if (!returnFlag) {
+                throw new Error(`Error: The function should have return statement.`);
             }
 
             current++;
@@ -117,14 +155,21 @@ const parser = (tokens) => {
                 (token.type !== 'SEMICOLON') ||
                 (token.type === 'SEMICOLON' && token.value !== ';')
             ) {
-                //when in return returned value not number and not hex number
-                // if (token.type !== 'NUMBER' &&
-                //     token.type !== 'HEX_NUMBER' &&
-                //     token.type !== 'LOGICAL_NEGATION' &&
-                //     token.type !== 'PARENTHESIS' &&
-                //     token.type !== 'MUL_OPERATION') {
-                //     throw new Error(`Error: Return value should be number. Line: ${line}`);
-                // }
+                //when in return returned value not number and not hex number, and not operation
+                if (token.type !== 'NUMBER' &&
+                    token.type !== 'HEX_NUMBER' &&
+                    token.type !== 'XOR_OPERATION' &&
+                    token.type !== 'DIV_OPERATION' &&
+                    token.type !== 'LOGICAL_NEGATION' &&
+                    token.type !== 'PARENTHESIS' &&
+                    token.type !== 'WORD' &&
+                    token.type !== 'MUL_OPERATION') {
+                    throw new Error(`Error: Return value should be number. Line: ${line}`);
+                }
+                // can not assign in return
+                else if (token.type === 'ASSIGN') {
+                    throw new Error(`Error: Cannot assign variable in the return statement. Line: ${line}`);
+                }
 
                 node.body.push(walk());
                 token = tokens[current];
@@ -143,6 +188,12 @@ const parser = (tokens) => {
                     throw new Error(`Error: Unexpected token. Line: ${line}`);
                 }
             }
+
+            // when using not declared or not initialized variable 
+            const exp = node.body.map(elem => {
+                return elem.value;
+            });
+            checkErrWithVar(exp);
 
             current++;
             return node;
@@ -262,6 +313,24 @@ const parser = (tokens) => {
                 token = tokens[current];
             }
             current++;
+
+            // when using not declared or not initialized variable 
+            const exp = node.expression.map(elem => {
+                return elem.value;
+            });
+            checkErrWithVar(exp);
+
+            // when variable before = not declared
+            let flag = ast.body[0].body.some(elem => {
+                if (elem.id === 'declaration') {
+                    return elem.variable === node.variable;
+                }
+            });
+
+            if (!flag) {
+                throw new Error(`Error: Variable ${node.variable} is not declared. Line: ${line}`);
+            }
+
             return { ...node, expression: node.expression.filter((elem) => elem.id !== 'Assign') };
 
         }
@@ -303,6 +372,12 @@ const parser = (tokens) => {
                     variable: node.variable
                 }
             }
+
+            // when using not declared or not initialized variable 
+            const exp = node.expression.map(elem => {
+                return elem.value;
+            });
+            checkErrWithVar(exp);
 
             return { ...node, expression: node.expression.filter((elem) => elem.id !== 'Assign') };
         }

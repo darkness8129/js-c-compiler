@@ -64,10 +64,7 @@ negation endp
 
 main proc
 
-    invoke multiply, 2, 2
-	push eax
-	pop eax
-	invoke multiply, 2, eax
+    mov eax, 2
 	push eax
 
     pop eax

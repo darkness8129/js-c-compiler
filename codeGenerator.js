@@ -202,26 +202,10 @@ const generateAsmCodeFromFuncBody = (funcBody) => {
             });
             const generatedReturn = []
             generatedReturn.push(...generateExprAsmCode(expression));
-            // const lastCommand = generatedReturn[generatedReturn.length - 1];
-            // const secondElemOfLastCommand = lastCommand.split(' ')[1];
-            // console.log(generatedReturn);
-
-            // if (secondElemOfLastCommand === 'eax' || secondElemOfLastCommand === 'ebx') {
-            //     generatedReturn.push(`push ${secondElemOfLastCommand}`);
-            // }
-            // else if (!isNaN(secondElemOfLastCommand)) {
-            //     generatedReturn.push(`mov eax, ${secondElemOfLastCommand}`);
-            //     generatedReturn.push(`push eax`);
-            // }
-            // else {
-            //     generatedReturn.push(`push ${secondElemOfLastCommand}`);
-            // }
-
             generatedAsm.push(...generatedReturn);
         }
 
     }
-    //console.log(generatedAsm);
 
     return generatedAsm;
 }
@@ -313,8 +297,8 @@ const codeGenerator = (ast) => {
     // variables
     const variables = getVariables(FuncBody);
     //console.log(returnExpression);
-    console.log(FuncBody);
-    console.log(variables);
+    // console.log(FuncBody);
+    // console.log(variables);
 
     // asm code of func body
     const asmFuncBody = generateAsmCodeFromFuncBody(FuncBody);

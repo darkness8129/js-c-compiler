@@ -11,7 +11,7 @@ fs.readFile('./2-27-JavaScript-ІВ-81-Юхимчук.c', 'utf-8', (err, input) 
         //check for errors in compiling
         try {
             const tokens = lexerModule.lexer(input);
-            console.log(tokens);
+            //console.log(tokens);
 
             let ast = parserModule.parser(tokens);
             console.log(JSON.stringify(ast, null, 2));
