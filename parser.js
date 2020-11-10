@@ -7,7 +7,7 @@ const parser = (tokens) => {
     const checkErrWithVar = (exp) => {
         const LETTERS = /[a-zA-Z]/;
         for (let i = 0; i < exp.length; i++) {
-            if (LETTERS.test(exp[i])) {
+            if (LETTERS.test(exp[i]) && exp[i][0] !== '0' && exp[i][1] !== 'x') {
                 let flag1 = ast.body[0].body.some(elem => {
                     if (elem.id === 'expressionWithType' || elem.id === 'declaration') {
                         return elem.variable === exp[i];

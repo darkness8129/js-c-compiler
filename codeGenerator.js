@@ -180,6 +180,8 @@ const generateExprAsmCode = (expressions) => {
 
 // func for generate asm from func body
 const generateAsmCodeFromFuncBody = (funcBody) => {
+    // {parseInt(node.value, 16)
+    // {parseInt(node.value, 10)
     const generatedAsm = [];
 
     for (let i = 0; i < funcBody.length; i++) {
@@ -188,7 +190,16 @@ const generateAsmCodeFromFuncBody = (funcBody) => {
         }
         else if (funcBody[i].id === 'expressionWithType' || funcBody[i].id === 'expressionWithoutType') {
             let expression = funcBody[i].expression.map(elem => {
-                return elem.value;
+                if (elem.id === 'HexNumberLiteral') {
+                    return parseInt(elem.value, 16);
+                }
+                else if (elem.id === 'NumberLiteral') {
+                    return parseInt(elem.value, 10);
+                }
+                else {
+                    return elem.value;
+                }
+
             });
             generatedAsm.push(...generateExprAsmCode(expression));
             generatedAsm.push(`pop ${funcBody[i].variable}`);
@@ -366,7 +377,7 @@ main proc
     print chr$(13, 10)
 
     ret
-    main endp`
+main endp`
 
     // code of asm code
     const code = `

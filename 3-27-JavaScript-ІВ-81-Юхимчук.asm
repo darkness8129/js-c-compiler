@@ -19,6 +19,7 @@ includelib \masm32\lib\msvcrt.lib
 
 .data?
     a dd ?
+	b dd ?
 
 
 .code
@@ -64,10 +65,16 @@ negation endp
 
 main proc
 
-    mov eax, 1000000000000000000000000000000000000000000
+    mov eax, 3
 	push eax
 	pop a
-	mov eax, a
+	mov eax, 4
+	push eax
+	pop b
+	invoke xorOperation, a, b
+	push eax
+	pop eax
+	invoke multiply, eax, 2
 	push eax
 
     pop eax
@@ -75,5 +82,5 @@ main proc
     print chr$(13, 10)
 
     ret
-    main endp
+main endp
 end start
