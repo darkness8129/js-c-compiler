@@ -57,10 +57,10 @@ const lexer = (input) => {
                 }
 
                 // when variable or func name
-                if (char === '(' || char === ';'
+                if ((char === '(' || char === ')' || char === ';'
                     || char === '=' || char === '^'
                     || char === '*' || char === '/'
-                    || char === '!' && value !== 'return') {
+                    || char === '!') && value !== 'return') {
                     reservedWord = false;
                 }
             }

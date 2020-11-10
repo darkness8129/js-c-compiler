@@ -17,7 +17,7 @@ const generateExprAsmCode = (expressions) => {
             // slice expr in ()
             let sliceExpr = expressions.slice(
                 expressions.indexOf('(') + 1,
-                expressions.indexOf(')')
+                expressions.lastIndexOf(')')
             );
 
             // recursion in ()
@@ -34,8 +34,13 @@ const generateExprAsmCode = (expressions) => {
             );
 
             // replace (...) on eax
-            expressions.splice(expressions.indexOf('('), sliceExpr.length + 2, 'eax')
+            expressions.splice(expressions.indexOf('('), sliceExpr.length + 2, 'eax');
 
+            asmCode.push(
+                ...generateExprAsmCode(
+                    expressions
+                )
+            );
             break;
 
         }
