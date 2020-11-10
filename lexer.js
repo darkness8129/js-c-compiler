@@ -154,11 +154,6 @@ const lexer = (input) => {
                 char = input[++current];
             }
 
-            // if first 0
-            // if (value[0] === '0') {
-            //     char = input[--current];
-            // }
-
             tokens.push({
                 type: 'NUMBER',
                 value: value
@@ -189,7 +184,7 @@ const lexer = (input) => {
             continue;
         }
 
-        // division token
+        // mul token
         if (char === '*') {
             tokens.push({
                 type: 'MUL_OPERATION',

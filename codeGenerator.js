@@ -1,9 +1,9 @@
 const fs = require('fs');
 
+// func for generating asm from expr
 const generateExprAsmCode = (expressions) => {
     // commands 
     let asmCode = [];
-
 
     // if one value in return 
     if (expressions.length === 1 && expressions[0] !== 'eax' && expressions[0] !== 'ebx') {
@@ -36,6 +36,7 @@ const generateExprAsmCode = (expressions) => {
             // replace (...) on eax
             expressions.splice(expressions.indexOf('('), sliceExpr.length + 2, 'eax');
 
+            // when ()some operation()
             asmCode.push(
                 ...generateExprAsmCode(
                     expressions
@@ -87,7 +88,6 @@ const generateExprAsmCode = (expressions) => {
     // MULTIPLY AND DIVISION
     for (let i = 0; i < expressions.length; i++) {
         if (expressions[i] === '*') {
-
             if ((expressions[i - 1] === 'eax') && (expressions[i + 1] === 'eax')) {
                 asmCode.push(`pop ebx`);
                 asmCode.push(`pop eax`);
@@ -115,7 +115,6 @@ const generateExprAsmCode = (expressions) => {
             break;
         }
         else if (expressions[i] === '/') {
-
             if ((expressions[i - 1] === 'eax') && (expressions[i + 1] === 'eax')) {
                 asmCode.push(`pop ebx`);
                 asmCode.push(`pop eax`);
@@ -147,7 +146,6 @@ const generateExprAsmCode = (expressions) => {
     // XOR
     for (let i = 0; i < expressions.length; i++) {
         if (expressions[i] === '^') {
-
             if ((expressions[i - 1] === 'eax') && (expressions[i + 1] === 'eax')) {
                 asmCode.push(`pop ebx`);
                 asmCode.push(`pop eax`);
@@ -180,6 +178,7 @@ const generateExprAsmCode = (expressions) => {
     return asmCode;
 }
 
+// func for generate asm from func body
 const generateAsmCodeFromFuncBody = (funcBody) => {
     const generatedAsm = [];
 
@@ -191,8 +190,6 @@ const generateAsmCodeFromFuncBody = (funcBody) => {
             let expression = funcBody[i].expression.map(elem => {
                 return elem.value;
             });
-
-
             generatedAsm.push(...generateExprAsmCode(expression));
             generatedAsm.push(`pop ${funcBody[i].variable}`);
         }
@@ -204,12 +201,12 @@ const generateAsmCodeFromFuncBody = (funcBody) => {
             generatedReturn.push(...generateExprAsmCode(expression));
             generatedAsm.push(...generatedReturn);
         }
-
     }
 
     return generatedAsm;
 }
 
+// func for generate declaration of variables in asm
 const generateDeclarationOfVariables = (variables) => {
     const generatedAsm = [];
 
@@ -220,20 +217,13 @@ const generateDeclarationOfVariables = (variables) => {
     return generatedAsm;
 }
 
+// func for getting variables from func body
 const getVariables = (funcBody) => {
     const variables = [];
 
     funcBody.map(elem => {
         if (elem.id === 'declaration') {
             variables.push({ variable: elem.variable, type: elem.type, isDeclared: true });
-            // for (let i = 0; i < elem.expression; i++) {
-            //     const flag = variables.some(variable => {
-            //         return variable.variable === elem.expression[i].value;
-            //     })
-            //     if (!flag) {
-            //         throw new Error(`Variable ${elem.variable} is not declared!`);
-            //     }
-            // }
         }
         else if (elem.id === 'expressionWithType') {
             variables.push({ variable: elem.variable, type: elem.type, isDeclared: true, isInitialized: true });
@@ -257,6 +247,7 @@ const getVariables = (funcBody) => {
     return variables;
 }
 
+// func for getting return expr
 const getReturnExpr = (funcBody) => {
     return funcBody[funcBody.length - 1].body
         .map(node => {
@@ -287,6 +278,7 @@ const getReturnExpr = (funcBody) => {
         });
 }
 
+// main func for generating
 const codeGenerator = (ast) => {
     //all asm code
     const asmCode = [];
@@ -296,13 +288,9 @@ const codeGenerator = (ast) => {
     const returnExpression = getReturnExpr(FuncBody);
     // variables
     const variables = getVariables(FuncBody);
-    //console.log(returnExpression);
-    // console.log(FuncBody);
-    // console.log(variables);
-
     // asm code of func body
     const asmFuncBody = generateAsmCodeFromFuncBody(FuncBody);
-
+    // generated variables in asm
     const variabledAsm = generateDeclarationOfVariables(variables);
     const includes = `
 include \\masm32\\include\\windows.inc
@@ -410,7 +398,7 @@ end start`
     }
 
     // write all asm code in file with separating by \n
-    fs.writeFile('./2-27-JavaScript-ІВ-81-Юхимчук.asm', asmCode.join('\n'), (err) => {
+    fs.writeFile('./3-27-JavaScript-ІВ-81-Юхимчук.asm', asmCode.join('\n'), (err) => {
         if (err) throw err;
     });
 

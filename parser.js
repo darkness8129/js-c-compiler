@@ -4,7 +4,6 @@ const parser = (tokens) => {
     let line = 1;
 
     //func for checking errors with variables
-
     const checkErrWithVar = (exp) => {
         const LETTERS = /[a-zA-Z]/;
         for (let i = 0; i < exp.length; i++) {
@@ -21,10 +20,12 @@ const parser = (tokens) => {
                     }
                 });
 
+                // when do not declared
                 if (!flag1) {
                     throw new Error(`Error: Variable ${exp[i]} is not declared. Line: ${line}`);
                 }
 
+                // when do not initialized
                 if (!flag2) {
                     throw new Error(`Error: Variable ${exp[i]} is not initialized. Line: ${line}`);
                 }
