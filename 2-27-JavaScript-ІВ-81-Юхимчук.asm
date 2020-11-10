@@ -16,7 +16,11 @@ includelib \masm32\lib\user32.lib
 includelib \masm32\lib\kernel32.lib
 includelib \masm32\lib\msvcrt.lib
 
-.data
+
+.data?
+    a dd ?
+	b dd ?
+
 
 .code
 start:
@@ -61,19 +65,13 @@ negation endp
 
 main proc
 
-    invoke negation, 3
+    mov eax, 4
 	push eax
-	pop eax
-	invoke multiply, 4, eax
+	pop a
+	mov eax, 2
 	push eax
-	pop eax
-	invoke multiply, eax, 1
-	push eax
-	pop eax
-	invoke divide, eax, 1
-	push eax
-	pop eax
-	invoke xorOperation, 12, eax
+	pop b
+	invoke multiply, b, 1
 	push eax
 
     pop eax

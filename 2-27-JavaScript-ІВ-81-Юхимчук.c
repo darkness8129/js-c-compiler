@@ -1,3 +1,5 @@
 int main(){
-    return 12^4*!3*1/1;
+    int a = 4;
+    int b = 2;
+    return b*1;
 }

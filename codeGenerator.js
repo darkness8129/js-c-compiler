@@ -4,6 +4,13 @@ const generateExprAsmCode = (expressions) => {
     // commands 
     let asmCode = [];
 
+
+    // if one value in return 
+    if (expressions.length === 1 && expressions[0] !== 'eax' && expressions[0] !== 'ebx') {
+        asmCode.push(`mov eax, ${expressions[0]}`);
+        asmCode.push(`push eax`);
+    }
+
     for (let i = 0; i < expressions.length; i++) {
         if (expressions[i] === '(') {
 
@@ -130,8 +137,6 @@ const generateExprAsmCode = (expressions) => {
             );
             break;
         }
-
-
     }
 
     // XOR
@@ -170,25 +175,61 @@ const generateExprAsmCode = (expressions) => {
     return asmCode;
 }
 
-// to fix problems with eax
-// const fixAsmCode = (asmCode) => {
-//     for (let i = 0; i < asmCode.length; i++) {
-//         //if we have this command
-//         if (asmCode[i] === 'invoke multiply, eax, eax') {
-//             //replace this 
-//             asmCode[i] = 'invoke multiply, ebx, eax';
+const generateAsmCodeFromFuncBody = (funcBody) => {
+    const generatedAsm = [];
 
-//             // paste one pos before this 
-//             asmCode.splice(i - 1, 0, 'mov ebx, eax')
-//             //recursion
-//             asmCode = fixAsmCode(asmCode);
-//             break;
-//         }
-//     }
+    for (let i = 0; i < funcBody.length; i++) {
+        if (funcBody[i].id === 'declaration') {
+            continue;
+        }
+        else if (funcBody[i].id === 'expressionWithType' || funcBody[i].id === 'expressionWithoutType') {
+            let expression = funcBody[i].expression.map(elem => {
+                return elem.value;
+            });
 
-//     // return fixed asm code
-//     return asmCode
-// }
+
+            generatedAsm.push(...generateExprAsmCode(expression));
+            generatedAsm.push(`pop ${funcBody[i].variable}`);
+        }
+        else if (funcBody[i].id === 'Return') {
+            let expression = funcBody[i].body.map(elem => {
+                return elem.value;
+            });
+            const generatedReturn = []
+            generatedReturn.push(...generateExprAsmCode(expression));
+            // const lastCommand = generatedReturn[generatedReturn.length - 1];
+            // const secondElemOfLastCommand = lastCommand.split(' ')[1];
+            // console.log(generatedReturn);
+
+            // if (secondElemOfLastCommand === 'eax' || secondElemOfLastCommand === 'ebx') {
+            //     generatedReturn.push(`push ${secondElemOfLastCommand}`);
+            // }
+            // else if (!isNaN(secondElemOfLastCommand)) {
+            //     generatedReturn.push(`mov eax, ${secondElemOfLastCommand}`);
+            //     generatedReturn.push(`push eax`);
+            // }
+            // else {
+            //     generatedReturn.push(`push ${secondElemOfLastCommand}`);
+            // }
+
+            generatedAsm.push(...generatedReturn);
+        }
+
+    }
+    //console.log(generatedAsm);
+
+    return generatedAsm;
+}
+
+const generateDeclarationOfVariables = (variables) => {
+    const generatedAsm = [];
+
+    for (let i = 0; i < variables.length; i++) {
+        generatedAsm.push(`${variables[i].variable} dd ?`);
+    }
+
+    return generatedAsm;
+}
 
 const getVariables = (funcBody) => {
     const variables = [];
@@ -196,6 +237,14 @@ const getVariables = (funcBody) => {
     funcBody.map(elem => {
         if (elem.id === 'declaration') {
             variables.push({ variable: elem.variable, type: elem.type, isDeclared: true });
+            // for (let i = 0; i < elem.expression; i++) {
+            //     const flag = variables.some(variable => {
+            //         return variable.variable === elem.expression[i].value;
+            //     })
+            //     if (!flag) {
+            //         throw new Error(`Variable ${elem.variable} is not declared!`);
+            //     }
+            // }
         }
         else if (elem.id === 'expressionWithType') {
             variables.push({ variable: elem.variable, type: elem.type, isDeclared: true, isInitialized: true });
@@ -259,12 +308,13 @@ const codeGenerator = (ast) => {
     // variables
     const variables = getVariables(FuncBody);
     //console.log(returnExpression);
-    // console.log(FuncBody);
-    // console.log(variables);
+    console.log(FuncBody);
+    console.log(variables);
 
-    // asm code of return 
-    const calcExpression = generateExprAsmCode(returnExpression);
+    // asm code of func body
+    const asmFuncBody = generateAsmCodeFromFuncBody(FuncBody);
 
+    const variabledAsm = generateDeclarationOfVariables(variables);
     const includes = `
 include \\masm32\\include\\windows.inc
 include \\masm32\\macros\\macros.asm
@@ -285,7 +335,11 @@ option casemap : none
 ${includes}
 `
     // data of asm code
-    const data = '.data';
+    const data = `
+.data?
+    ${variabledAsm.join('\n\t')}
+`;
+
 
     const multiply = `
 multiply proc num1:DWORD, num2:DWORD
@@ -328,7 +382,7 @@ negation endp`
     const mainProc = `
 main proc
 
-    ${calcExpression.join('\n\t')}
+    ${asmFuncBody.join('\n\t')}
 
     pop eax
     print str$(eax)
