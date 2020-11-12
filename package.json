@@ -10,7 +10,7 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "start": "node compiler.js",
-        "build": "nexe compiler.js -r ./*.js"
+        "build": "nexe compiler.js -r ./*.js -t win32-x86-10.13.0"
     },
     "author": "Yaroslav Yukhymchuk",
     "license": "ISC"
