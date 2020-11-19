@@ -243,7 +243,7 @@ const lexer = (input) => {
         if (char === '?') {
             tokens.push({
                 type: 'TERNARY_OPERATOR',
-                value: '='
+                value: '?'
             });
 
             current++;

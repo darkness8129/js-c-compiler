@@ -33,6 +33,21 @@ const parser = (tokens) => {
         }
     }
 
+    const parseTernaryExpr = (node, expStr) => {
+        let condition = [...node.expression].slice(1, expStr.lastIndexOf('?'));
+        let firstOperand = [...node.expression].slice(expStr.lastIndexOf('?') + 1, expStr.lastIndexOf(':'));
+        let secondOperand = [...node.expression].slice(expStr.lastIndexOf(':') + 1);
+
+        return {
+            id: 'ternaryExpression',
+            type: node.type,
+            variable: node.variable,
+            condition,
+            firstOperand,
+            secondOperand
+        }
+    }
+
     // types
     let typeOfFunc,
         typeOfReturn;
@@ -332,6 +347,11 @@ const parser = (tokens) => {
                 throw new Error(`Error: Variable ${node.variable} is not declared. Line: ${line}`);
             }
 
+            // if we have ternary expr
+            if (exp.join('').lastIndexOf('?')) {
+                return parseTernaryExpr(node, exp);
+            }
+
             return { ...node, expression: node.expression.filter((elem) => elem.id !== 'Assign') };
 
         }
@@ -391,6 +411,11 @@ const parser = (tokens) => {
                 }
             }
 
+            // if we have ternary expr
+            if (exp.join('').lastIndexOf('?')) {
+                return parseTernaryExpr(node, exp);
+            }
+
             return { ...node, expression: node.expression.filter((elem) => elem.id !== 'Assign') };
         }
 
@@ -399,6 +424,22 @@ const parser = (tokens) => {
             current++;
             return {
                 id: 'semicolon',
+                value: token.value
+            };
+        }
+        // semicolon node
+        if (token.type === 'TERNARY_OPERATOR') {
+            current++;
+            return {
+                id: 'ternary',
+                value: token.value
+            };
+        }
+        // semicolon node
+        if (token.type === 'COLON') {
+            current++;
+            return {
+                id: 'colon',
                 value: token.value
             };
         }

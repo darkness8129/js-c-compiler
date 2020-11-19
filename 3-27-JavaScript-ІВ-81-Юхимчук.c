@@ -1,4 +1,4 @@
 int main(){
-    int b;
+    float b = 3 ? 2*3:3;
     return 2;
 }
