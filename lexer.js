@@ -228,6 +228,28 @@ const lexer = (input) => {
             continue;
         }
 
+        // assign token
+        if (char === ':') {
+            tokens.push({
+                type: 'COLON',
+                value: ':'
+            });
+
+            current++;
+            continue;
+        }
+
+        // assign token
+        if (char === '?') {
+            tokens.push({
+                type: 'TERNARY_OPERATOR',
+                value: '='
+            });
+
+            current++;
+            continue;
+        }
+
         // throw err when we do not know char
         throw new TypeError('Type Error! Unrecognized Character: ' + char);
     }
