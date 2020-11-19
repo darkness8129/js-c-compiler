@@ -323,7 +323,7 @@ const parser = (tokens) => {
 
             // when variable before = not declared
             let flag = ast.body[0].body.some(elem => {
-                if (elem.id === 'declaration') {
+                if (elem.id === 'declaration' || elem.id === 'expressionWithType') {
                     return elem.variable === node.variable;
                 }
             });
@@ -366,6 +366,23 @@ const parser = (tokens) => {
             }
             current++;
 
+            // when using not declared or not initialized variable 
+            const exp = node.expression.map(elem => {
+                return elem.value;
+            });
+            checkErrWithVar(exp);
+
+            // when var already declared
+            let flag = ast.body[0].body.some(elem => {
+                if ((elem.id === 'expressionWithType' || elem.id === 'declaration') && elem.variable === node.variable) {
+                    return true;
+                }
+            });
+
+            if (flag) {
+                throw new Error(`Error: Variable ${node.variable} is already declared. Line: ${line}`);
+            }
+
             if (node.expression.length === 0) {
                 return {
                     id: 'declaration',
@@ -373,12 +390,6 @@ const parser = (tokens) => {
                     variable: node.variable
                 }
             }
-
-            // when using not declared or not initialized variable 
-            const exp = node.expression.map(elem => {
-                return elem.value;
-            });
-            checkErrWithVar(exp);
 
             return { ...node, expression: node.expression.filter((elem) => elem.id !== 'Assign') };
         }

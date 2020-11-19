@@ -16,7 +16,7 @@ fs.readFile('./3-27-JavaScript-ІВ-81-Юхимчук.c', 'utf-8', (err, input) 
             codeGeneratorModule.codeGenerator(ast);
         }
         catch (err) {
-            console.log(err.message);
+            console.log(err);
         }
 
         // enter to close console
