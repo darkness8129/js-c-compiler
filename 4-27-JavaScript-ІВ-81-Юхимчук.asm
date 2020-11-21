@@ -18,13 +18,15 @@ includelib \masm32\lib\msvcrt.lib
 
 
 .data?
-    
+    k dd ?
+	m dd ?
+	a dd ?
+	b dd ?
 
 
 .code
 start:
     call main
-    mov eax, input("ENTER to continue. . . ")
     exit
 
 multiply proc num1:DWORD, num2:DWORD
@@ -66,10 +68,47 @@ main proc
 
     mov eax, 2
 	push eax
+	pop k
+	mov eax, k
+	push eax
+	cmp eax, 0
+	je falseOperand1
+	jne trueOperand1
+	trueOperand1:
+		mov eax, 3
+		push eax
+		jmp continue1
+	falseOperand1:
+		invoke multiply, 7, 2
+		push eax
+		jmp continue1
+	continue1:
+	pop m
+	mov eax, 0
+	push eax
+	pop a
+	invoke multiply, a, k
+	push eax
+	cmp eax, 0
+	je falseOperand2
+	jne trueOperand2
+	trueOperand2:
+		mov eax, 3
+		push eax
+		jmp continue2
+	falseOperand2:
+		invoke multiply, 7, 2
+		push eax
+		jmp continue2
+	continue2:
+	pop b
+	invoke multiply, b, m
+	push eax
 
     pop eax
     print str$(eax)
     print chr$(13, 10)
+    mov eax, input("ENTER to continue. . . ")
 
     ret
 main endp

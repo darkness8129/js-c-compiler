@@ -8,17 +8,42 @@ const parser = (tokens) => {
         const LETTERS = /[a-zA-Z]/;
         for (let i = 0; i < exp.length; i++) {
             if (LETTERS.test(exp[i]) && exp[i][0] !== '0' && exp[i][1] !== 'x') {
-                let flag1 = ast.body[0].body.some(elem => {
-                    if (elem.id === 'expressionWithType' || elem.id === 'declaration') {
-                        return elem.variable === exp[i];
-                    }
-                });
+                // let flag1 = ast.body[0].body.some(elem => {
+                //     if (elem.id === 'expressionWithType' || elem.id === 'declaration' || elem.id === 'ternaryExpression') {
+                //         return elem.variable === exp[i];
+                //     }
+                // });
 
-                let flag2 = ast.body[0].body.some(elem => {
-                    if (elem.id === 'expressionWithoutType' || elem.id === 'expressionWithType') {
-                        return elem.variable === exp[i];
+                let flag1 = false;
+                let body = ast.body[0].body;
+                for (let j = 0; j < body.length; j++) {
+                    if (body[j].id === 'expressionWithType' ||
+                        body[j].id === 'declaration' ||
+                        (body[j].id === 'ternaryExpression' && body[j].type)) {
+                        if (body[j].variable === exp[i]) {
+                            flag1 = true;
+                            break;
+                        }
                     }
-                });
+                }
+
+                let flag2 = false;
+                for (let j = 0; j < body.length; j++) {
+                    if (body[j].id === 'expressionWithoutType' ||
+                        body[j].id === 'expressionWithType' ||
+                        body[j].id === 'ternaryExpression') {
+                        if (body[j].variable === exp[i]) {
+                            flag2 = true;
+                            break;
+                        }
+                    }
+                }
+
+                // let flag2 = ast.body[0].body.some(elem => {
+                //     if (elem.id === 'expressionWithoutType' || elem.id === 'expressionWithType') {
+                //         return elem.variable === exp[i];
+                //     }
+                // });
 
                 // when do not declared
                 if (!flag1) {
@@ -227,9 +252,9 @@ const parser = (tokens) => {
             }
 
             // check types
-            if (typeOfFunc === 'int' && typeOfReturn === 'float') {
-                throw new Error(`Error: Return type has not correct type. Line: ${line}`);
-            }
+            // if (typeOfFunc === 'int' && typeOfReturn === 'float') {
+            //     throw new Error(`Error: Return type has not correct type. Line: ${line}`);
+            // }
 
             return {
                 id: 'NumberLiteral',
@@ -412,7 +437,7 @@ const parser = (tokens) => {
             }
 
             // if we have ternary expr
-            if (exp.join('').lastIndexOf('?')) {
+            if (exp.join('').lastIndexOf('?') !== -1) {
                 return parseTernaryExpr(node, exp);
             }
 

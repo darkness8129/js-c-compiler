@@ -180,9 +180,9 @@ const generateExprAsmCode = (expressions) => {
 
 // func for generate asm from func body
 const generateAsmCodeFromFuncBody = (funcBody) => {
-    // {parseInt(node.value, 16)
-    // {parseInt(node.value, 10)
     const generatedAsm = [];
+    // to get unique name of true, false, continue
+    let uniqueNumber = 1;
 
     for (let i = 0; i < funcBody.length; i++) {
         if (funcBody[i].id === 'declaration') {
@@ -203,6 +203,40 @@ const generateAsmCodeFromFuncBody = (funcBody) => {
             });
             generatedAsm.push(...generateExprAsmCode(expression));
             generatedAsm.push(`pop ${funcBody[i].variable}`);
+        }
+        else if (funcBody[i].id === 'ternaryExpression') {
+
+            const genInt = (part) => {
+                return funcBody[i][part].map(elem => {
+                    if (elem.id === 'HexNumberLiteral') {
+                        return parseInt(elem.value, 16);
+                    }
+                    else if (elem.id === 'NumberLiteral') {
+                        return parseInt(elem.value, 10);
+                    }
+                    else {
+                        return elem.value;
+                    }
+
+                });
+            }
+
+            let condition = genInt('condition');
+            let firstOperand = genInt('firstOperand');
+            let secondOperand = genInt('secondOperand');
+            generatedAsm.push(...generateExprAsmCode(condition));
+            generatedAsm.push(`cmp eax, 0`);
+            generatedAsm.push(`je falseOperand${uniqueNumber}`);
+            generatedAsm.push(`jne trueOperand${uniqueNumber}`);
+            generatedAsm.push(`trueOperand${uniqueNumber}:`);
+            generatedAsm.push(...generateExprAsmCode(firstOperand).map(el => `\t${el}`));
+            generatedAsm.push(`\tjmp continue${uniqueNumber}`);
+            generatedAsm.push(`falseOperand${uniqueNumber}:`);
+            generatedAsm.push(...generateExprAsmCode(secondOperand).map(el => `\t${el}`));
+            generatedAsm.push(`\tjmp continue${uniqueNumber}`);
+            generatedAsm.push(`continue${uniqueNumber}:`);
+            generatedAsm.push(`pop ${funcBody[i].variable}`);
+            uniqueNumber++;
         }
         else if (funcBody[i].id === 'Return') {
             let expression = funcBody[i].body.map(elem => {
@@ -238,6 +272,9 @@ const getVariables = (funcBody) => {
         }
         else if (elem.id === 'expressionWithType') {
             variables.push({ variable: elem.variable, type: elem.type, isDeclared: true, isInitialized: true });
+        }
+        else if (elem.id === 'ternaryExpression') {
+            variables.push({ variable: elem.variable, type: elem.type });
         }
         else if (elem.id === 'expressionWithoutType') {
             const isVariable = variables.some((variable) => {
@@ -375,6 +412,7 @@ main proc
     pop eax
     print str$(eax)
     print chr$(13, 10)
+    mov eax, input("ENTER to continue. . . ")
 
     ret
 main endp`
@@ -384,7 +422,6 @@ main endp`
 .code
 start:
     call main
-    mov eax, input("ENTER to continue. . . ")
     exit
 ${multiply} 
 ${divide}
@@ -409,7 +446,7 @@ end start`
     }
 
     // write all asm code in file with separating by \n
-    fs.writeFile('./3-27-JavaScript-ІВ-81-Юхимчук.asm', asmCode.join('\n'), (err) => {
+    fs.writeFile('./4-27-JavaScript-ІВ-81-Юхимчук.asm', asmCode.join('\n'), (err) => {
         if (err) throw err;
     });
 

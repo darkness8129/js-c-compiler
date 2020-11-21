@@ -60,7 +60,8 @@ const lexer = (input) => {
                 if ((char === '(' || char === ')' || char === ';'
                     || char === '=' || char === '^'
                     || char === '*' || char === '/'
-                    || char === '!') && value !== 'return') {
+                    || char === '!' || char === '?'
+                    || char === ':') && value !== 'return') {
                     reservedWord = false;
                 }
             }
