@@ -2,6 +2,7 @@ const parser = (tokens) => {
     // index of current token
     var current = 0;
     let line = 1;
+    let funcIndex = -1;
 
     //func for checking errors with variables
     const checkErrWithVar = (exp) => {
@@ -13,7 +14,7 @@ const parser = (tokens) => {
                 exp[i][1] !== "x"
             ) {
                 let flag1 = false;
-                let body = ast.body[0].body;
+                let body = ast.body[funcIndex].body;
                 for (let j = 0; j < body.length; j++) {
                     if (
                         body[j].id === "expressionWithType" ||
@@ -105,7 +106,14 @@ const parser = (tokens) => {
         }
         // function node
         // need second check because we have types in func also
-        if (token.type === "TYPE" && tokens[current + 1].value === "main") {
+        if (
+            token.type === "TYPE" &&
+            tokens[current + 1].type === "WORD" &&
+            tokens[current + 2].value === "("
+        ) {
+            // to push the body to the desired function
+            funcIndex++;
+
             var type = token.value;
             typeOfFunc = type;
 
@@ -120,13 +128,6 @@ const parser = (tokens) => {
                 body: [],
             };
 
-            //check having main func
-            if (node.name !== "main") {
-                throw Error(
-                    `Error! You should have main function! Line:${line}`
-                );
-            }
-
             // skip main token
             token = tokens[++current];
 
@@ -139,13 +140,18 @@ const parser = (tokens) => {
             // adding params for func node
             if (token.type === "PARENTHESIS" && token.value === "(") {
                 token = tokens[++current];
-
+                ///!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 while (
                     token.type !== "PARENTHESIS" ||
                     (token.type === "PARENTHESIS" && token.value !== ")")
                 ) {
-                    node.params.push(walk());
-                    token = tokens[current];
+                    if (token.type === "COMA") {
+                        current++;
+                        token = tokens[current];
+                    } else {
+                        node.params.push(walk());
+                        token = tokens[current];
+                    }
                 }
 
                 current++;
@@ -171,7 +177,7 @@ const parser = (tokens) => {
                 // for check if node === null
                 let funcVal = walk();
                 if (funcVal) {
-                    ast.body[0].body.push(funcVal);
+                    ast.body[funcIndex].body.push(funcVal);
                 }
 
                 token = tokens[current];
@@ -187,7 +193,7 @@ const parser = (tokens) => {
             }
 
             // check we have return or not
-            const returnFlag = ast.body[0].body.some((node) => {
+            const returnFlag = ast.body[funcIndex].body.some((node) => {
                 return node.id === "Return";
             });
 
@@ -401,7 +407,7 @@ const parser = (tokens) => {
             checkErrWithVar(exp);
 
             // when variable before = not declared
-            let flag = ast.body[0].body.some((elem) => {
+            let flag = ast.body[funcIndex].body.some((elem) => {
                 if (
                     elem.id === "declaration" ||
                     elem.id === "expressionWithType"
@@ -439,7 +445,13 @@ const parser = (tokens) => {
         }
 
         // type node
-        if (token.type === "TYPE" && tokens[current + 1].value !== "main") {
+        if (
+            token.type === "TYPE" &&
+            tokens[current + 1].type === "WORD" &&
+            tokens[current + 2].value !== "(" &&
+            tokens[current + 2].value !== ")" &&
+            tokens[current + 2].value !== ","
+        ) {
             current++;
             var node = {
                 id: "expressionWithType",
@@ -449,7 +461,7 @@ const parser = (tokens) => {
             };
 
             // when var already declared
-            let flag = ast.body[0].body.some((elem) => {
+            let flag = ast.body[funcIndex].body.some((elem) => {
                 if (
                     (elem.id === "expressionWithType" ||
                         elem.id === "declaration") &&
@@ -507,6 +519,21 @@ const parser = (tokens) => {
                     (elem) => elem.id !== "Assign"
                 ),
             };
+        } else if (
+            token.type === "TYPE" &&
+            tokens[current + 1].type === "WORD" &&
+            (tokens[current + 2].value === "," ||
+                tokens[current + 2].value === ")")
+        ) {
+            current++;
+            var node = {
+                id: "functionParameter",
+                type: token.value,
+                variable: tokens[current].value,
+            };
+
+            current++;
+            return node;
         }
 
         // semicolon node

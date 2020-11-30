@@ -63,13 +63,10 @@ negation endp
 
 main proc
 
-    mov eax, 1
+    mov eax, 3
 	push eax
 	pop a
-	invoke xorOperation, a, 3
-	push eax
-	pop a
-	mov eax, a
+	mov eax, 1
 	push eax
 
     pop eax
