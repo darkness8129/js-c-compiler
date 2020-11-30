@@ -18,8 +18,7 @@ includelib \masm32\lib\msvcrt.lib
 
 
 .data?
-    b dd ?
-	a dd ?
+    a dd ?
 
 
 .code
@@ -66,8 +65,8 @@ main proc
 
     mov eax, 1
 	push eax
-	pop b
-	mov eax, 2
+	pop a
+	invoke xorOperation, a, 3
 	push eax
 	pop a
 	mov eax, a

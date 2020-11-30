@@ -364,7 +364,8 @@ const parser = (tokens) => {
         if (
             token.type === "WORD" &&
             tokens[current - 1].type !== "TYPE" &&
-            tokens[current + 1].value === "="
+            (tokens[current + 1].value === "=" ||
+                tokens[current + 1].value === "^")
         ) {
             var node = {
                 id: "expressionWithoutType",
@@ -372,7 +373,17 @@ const parser = (tokens) => {
                 expression: [],
             };
 
+            // when we have ^=
+            if (tokens[current + 1].value === "^") {
+                node.expression.push(tokens[current]);
+                // here token ^
+                current++;
+                node.expression.push(tokens[current]);
+            }
+
+            // here token =
             current++;
+            console.log(tokens[current]);
 
             while (
                 token.type !== "SEMICOLON" ||
@@ -406,7 +417,7 @@ const parser = (tokens) => {
             }
 
             // if we have ternary expr
-            if (exp.join("").lastIndexOf("?")) {
+            if (exp.join("").lastIndexOf("?") !== -1) {
                 return parseTernaryExpr(node, exp);
             }
 
@@ -437,23 +448,6 @@ const parser = (tokens) => {
                 expression: [],
             };
 
-            token = tokens[++current];
-
-            while (
-                token.type !== "SEMICOLON" ||
-                (token.type === "SEMICOLON" && token.value !== ";")
-            ) {
-                node.expression.push(walk());
-                token = tokens[current];
-            }
-            current++;
-
-            // when using not declared or not initialized variable
-            const exp = node.expression.map((elem) => {
-                return elem.value;
-            });
-            checkErrWithVar(exp);
-
             // when var already declared
             let flag = ast.body[0].body.some((elem) => {
                 if (
@@ -470,6 +464,29 @@ const parser = (tokens) => {
                     `Error: Variable ${node.variable} is already declared. Line: ${line}`
                 );
             }
+
+            if (tokens[current + 1].value === "^") {
+                throw new Error(
+                    `Error! Variable ${node.variable} is not initialized! Line: ${line}.`
+                );
+            }
+
+            token = tokens[++current];
+
+            while (
+                token.type !== "SEMICOLON" ||
+                (token.type === "SEMICOLON" && token.value !== ";")
+            ) {
+                node.expression.push(walk());
+                token = tokens[current];
+            }
+            current++;
+
+            // when using not declared or not initialized variable
+            const exp = node.expression.map((elem) => {
+                return elem.value;
+            });
+            checkErrWithVar(exp);
 
             if (node.expression.length === 0) {
                 return {
