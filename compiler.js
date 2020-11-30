@@ -1,11 +1,11 @@
-//imports 
-const fs = require('fs');
-const readline = require('readline');
-const codeGeneratorModule = require('./codeGenerator');
-const lexerModule = require('./lexer');
-const parserModule = require('./parser');
+//imports
+const fs = require("fs");
+const readline = require("readline");
+const codeGeneratorModule = require("./codeGenerator");
+const lexerModule = require("./lexer");
+const parserModule = require("./parser");
 
-fs.readFile('./4-27-JavaScript-ІВ-81-Юхимчук.c', 'utf-8', (err, input) => {
+fs.readFile("./5-27-JavaScript-ІВ-81-Юхимчук.c", "utf-8", (err, input) => {
     //check for errors in reading file
     if (err === null) {
         //check for errors in compiling
@@ -14,23 +14,21 @@ fs.readFile('./4-27-JavaScript-ІВ-81-Юхимчук.c', 'utf-8', (err, input) 
             let ast = parserModule.parser(tokens);
             console.log(JSON.stringify(ast, null, 2));
             codeGeneratorModule.codeGenerator(ast);
-        }
-        catch (err) {
+        } catch (err) {
             console.log(err);
         }
 
         // enter to close console
         const rl = readline.createInterface({
             input: process.stdin,
-            output: process.stdout
+            output: process.stdout,
         });
 
         rl.question("Press ENTER to continue... ", () => {
             rl.close();
         });
         //------------------------
-    }
-    else {
+    } else {
         console.log(new Error(err.message));
     }
 });

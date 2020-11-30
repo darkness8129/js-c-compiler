@@ -7,19 +7,19 @@ const parser = (tokens) => {
     const checkErrWithVar = (exp) => {
         const LETTERS = /[a-zA-Z]/;
         for (let i = 0; i < exp.length; i++) {
-            if (LETTERS.test(exp[i]) && exp[i][0] !== '0' && exp[i][1] !== 'x') {
-                // let flag1 = ast.body[0].body.some(elem => {
-                //     if (elem.id === 'expressionWithType' || elem.id === 'declaration' || elem.id === 'ternaryExpression') {
-                //         return elem.variable === exp[i];
-                //     }
-                // });
-
+            if (
+                LETTERS.test(exp[i]) &&
+                exp[i][0] !== "0" &&
+                exp[i][1] !== "x"
+            ) {
                 let flag1 = false;
                 let body = ast.body[0].body;
                 for (let j = 0; j < body.length; j++) {
-                    if (body[j].id === 'expressionWithType' ||
-                        body[j].id === 'declaration' ||
-                        (body[j].id === 'ternaryExpression' && body[j].type)) {
+                    if (
+                        body[j].id === "expressionWithType" ||
+                        body[j].id === "declaration" ||
+                        (body[j].id === "ternaryExpression" && body[j].type)
+                    ) {
                         if (body[j].variable === exp[i]) {
                             flag1 = true;
                             break;
@@ -29,9 +29,11 @@ const parser = (tokens) => {
 
                 let flag2 = false;
                 for (let j = 0; j < body.length; j++) {
-                    if (body[j].id === 'expressionWithoutType' ||
-                        body[j].id === 'expressionWithType' ||
-                        body[j].id === 'ternaryExpression') {
+                    if (
+                        body[j].id === "expressionWithoutType" ||
+                        body[j].id === "expressionWithType" ||
+                        body[j].id === "ternaryExpression"
+                    ) {
                         if (body[j].variable === exp[i]) {
                             flag2 = true;
                             break;
@@ -39,57 +41,71 @@ const parser = (tokens) => {
                     }
                 }
 
-                // let flag2 = ast.body[0].body.some(elem => {
-                //     if (elem.id === 'expressionWithoutType' || elem.id === 'expressionWithType') {
-                //         return elem.variable === exp[i];
-                //     }
-                // });
-
                 // when do not declared
                 if (!flag1) {
-                    throw new Error(`Error: Variable ${exp[i]} is not declared. Line: ${line}`);
+                    throw new Error(
+                        `Error: Variable ${exp[i]} is not declared. Line: ${line}`
+                    );
                 }
 
                 // when do not initialized
                 if (!flag2) {
-                    throw new Error(`Error: Variable ${exp[i]} is not initialized. Line: ${line}`);
+                    throw new Error(
+                        `Error: Variable ${exp[i]} is not initialized. Line: ${line}`
+                    );
                 }
             }
         }
-    }
+    };
 
     const parseTernaryExpr = (node, expStr) => {
-        let condition = [...node.expression].slice(1, expStr.lastIndexOf('?'));
-        let firstOperand = [...node.expression].slice(expStr.lastIndexOf('?') + 1, expStr.lastIndexOf(':'));
-        let secondOperand = [...node.expression].slice(expStr.lastIndexOf(':') + 1);
+        let condition = [...node.expression].slice(1, expStr.lastIndexOf("?"));
+        let firstOperand = [...node.expression].slice(
+            expStr.lastIndexOf("?") + 1,
+            expStr.lastIndexOf(":")
+        );
+        let secondOperand = [...node.expression].slice(
+            expStr.lastIndexOf(":") + 1
+        );
+
+        if (condition.length === 0) {
+            throw new Error(`Error! Condition does not exist. Line: ${line}`);
+        } else if (firstOperand.length === 0) {
+            throw new Error(
+                `Error! First operand does not exist. Line: ${line}`
+            );
+        } else if (secondOperand.length === 0) {
+            throw new Error(
+                `Error! Second operand does not exist. Line: ${line}`
+            );
+        }
 
         return {
-            id: 'ternaryExpression',
+            id: "ternaryExpression",
             type: node.type,
             variable: node.variable,
             condition,
             firstOperand,
-            secondOperand
-        }
-    }
+            secondOperand,
+        };
+    };
 
     // types
-    let typeOfFunc,
-        typeOfReturn;
+    let typeOfFunc, typeOfReturn;
 
     const walk = () => {
         // current token
         var token = tokens[current];
 
         // increment line when we see line flag
-        if (token.type === 'LINEFLAG') {
+        if (token.type === "LINEFLAG") {
             current++;
             line++;
             return;
         }
         // function node
         // need second check because we have types in func also
-        if (token.type === 'TYPE' && tokens[current + 1].value === 'main') {
+        if (token.type === "TYPE" && tokens[current + 1].value === "main") {
             var type = token.value;
             typeOfFunc = type;
 
@@ -97,38 +113,36 @@ const parser = (tokens) => {
             token = tokens[++current];
 
             var node = {
-                id: 'Function',
+                id: "Function",
                 name: token.value,
                 type: type,
                 params: [],
-                body: []
+                body: [],
             };
 
             //check having main func
-            if (node.name !== 'main') {
-                throw Error(`Error! You should have main function! Line:${line}`)
+            if (node.name !== "main") {
+                throw Error(
+                    `Error! You should have main function! Line:${line}`
+                );
             }
 
             // skip main token
             token = tokens[++current];
 
             // we can not write smth after name of func
-            if (token.type !== 'PARENTHESIS') {
+            if (token.type !== "PARENTHESIS") {
                 token = tokens[++current];
                 throw new Error(`Error: Unexpected token. Line: ${line}`);
             }
 
             // adding params for func node
-            if (
-                token.type === 'PARENTHESIS' &&
-                token.value === '('
-            ) {
-
+            if (token.type === "PARENTHESIS" && token.value === "(") {
                 token = tokens[++current];
 
                 while (
-                    (token.type !== 'PARENTHESIS') ||
-                    (token.type === 'PARENTHESIS' && token.value !== ')')
+                    token.type !== "PARENTHESIS" ||
+                    (token.type === "PARENTHESIS" && token.value !== ")")
                 ) {
                     node.params.push(walk());
                     token = tokens[current];
@@ -137,7 +151,7 @@ const parser = (tokens) => {
                 current++;
 
                 // we can not write smth after ()
-                if (tokens[current].type !== 'CURLY') {
+                if (tokens[current].type !== "CURLY") {
                     token = tokens[++current];
                     throw new Error(`Error: Unexpected token. Line: ${line}`);
                 }
@@ -147,12 +161,12 @@ const parser = (tokens) => {
         }
 
         // function body node
-        if (token.value === '{') {
+        if (token.value === "{") {
             token = tokens[++current];
 
             while (
-                (token.type !== 'CURLY') ||
-                (token.type === 'CURLY' && token.value !== '}')
+                token.type !== "CURLY" ||
+                (token.type === "CURLY" && token.value !== "}")
             ) {
                 // for check if node === null
                 let funcVal = walk();
@@ -164,18 +178,24 @@ const parser = (tokens) => {
             }
 
             // we can not write symbols after '}'
-            if (token.type === 'CURLY' && token.value === '}' && token[++current]) {
+            if (
+                token.type === "CURLY" &&
+                token.value === "}" &&
+                token[++current]
+            ) {
                 throw new Error(`Error: Unexpected token. Line: ${line}`);
             }
 
-            // check we have return or not 
+            // check we have return or not
             const returnFlag = ast.body[0].body.some((node) => {
-                return node.id === 'Return';
+                return node.id === "Return";
             });
 
             // when we do not have return
             if (!returnFlag) {
-                throw new Error(`Error: The function should have return statement.`);
+                throw new Error(
+                    `Error: The function should have return statement.`
+                );
             }
 
             current++;
@@ -184,32 +204,38 @@ const parser = (tokens) => {
         }
 
         // return 'return' node
-        if (token.type === 'RETURN') {
+        if (token.type === "RETURN") {
             token = tokens[++current];
 
             var node = {
-                id: 'Return',
-                body: []
+                id: "Return",
+                body: [],
             };
 
             while (
-                (token.type !== 'SEMICOLON') ||
-                (token.type === 'SEMICOLON' && token.value !== ';')
+                token.type !== "SEMICOLON" ||
+                (token.type === "SEMICOLON" && token.value !== ";")
             ) {
                 //when in return returned value not number and not hex number, and not operation
-                if (token.type !== 'NUMBER' &&
-                    token.type !== 'HEX_NUMBER' &&
-                    token.type !== 'XOR_OPERATION' &&
-                    token.type !== 'DIV_OPERATION' &&
-                    token.type !== 'LOGICAL_NEGATION' &&
-                    token.type !== 'PARENTHESIS' &&
-                    token.type !== 'WORD' &&
-                    token.type !== 'MUL_OPERATION') {
-                    throw new Error(`Error: Return value should be number. Line: ${line}`);
+                if (
+                    token.type !== "NUMBER" &&
+                    token.type !== "HEX_NUMBER" &&
+                    token.type !== "XOR_OPERATION" &&
+                    token.type !== "DIV_OPERATION" &&
+                    token.type !== "LOGICAL_NEGATION" &&
+                    token.type !== "PARENTHESIS" &&
+                    token.type !== "WORD" &&
+                    token.type !== "MUL_OPERATION"
+                ) {
+                    throw new Error(
+                        `Error: Return value should be number. Line: ${line}`
+                    );
                 }
                 // can not assign in return
-                else if (token.type === 'ASSIGN') {
-                    throw new Error(`Error: Cannot assign variable in the return statement. Line: ${line}`);
+                else if (token.type === "ASSIGN") {
+                    throw new Error(
+                        `Error: Cannot assign variable in the return statement. Line: ${line}`
+                    );
                 }
 
                 node.body.push(walk());
@@ -217,38 +243,40 @@ const parser = (tokens) => {
             }
 
             //number of ( === number of )
-            if (node.body.filter(node => node.value === '(').length !==
-                node.body.filter(node => node.value === ')').length
+            if (
+                node.body.filter((node) => node.value === "(").length !==
+                node.body.filter((node) => node.value === ")").length
             ) {
                 throw new Error(`Error: Unexpected token. Line: ${line}`);
             }
 
             // can not be **
             for (let i = 0; i < node.body.length; i++) {
-                if (node.body[i].value === '*' && node.body[i + 1].value === '*') {
+                if (
+                    node.body[i].value === "*" &&
+                    node.body[i + 1].value === "*"
+                ) {
                     throw new Error(`Error: Unexpected token. Line: ${line}`);
                 }
             }
 
-            // when using not declared or not initialized variable 
-            const exp = node.body.map(elem => {
+            // when using not declared or not initialized variable
+            const exp = node.body.map((elem) => {
                 return elem.value;
             });
             checkErrWithVar(exp);
 
             current++;
             return node;
-
         }
 
         // numberLiteral node
-        if (token.type === 'NUMBER') {
+        if (token.type === "NUMBER") {
             current++;
-            if (token.value.indexOf('.') === -1) {
-                typeOfReturn = 'int'
-            }
-            else {
-                typeOfReturn = 'float'
+            if (token.value.indexOf(".") === -1) {
+                typeOfReturn = "int";
+            } else {
+                typeOfReturn = "float";
             }
 
             // check types
@@ -257,89 +285,89 @@ const parser = (tokens) => {
             // }
 
             return {
-                id: 'NumberLiteral',
-                value: token.value
+                id: "NumberLiteral",
+                value: token.value,
             };
         }
 
         // HexNumberLiteral node
-        if (token.type === 'HEX_NUMBER') {
+        if (token.type === "HEX_NUMBER") {
             //check for normal hex num
             if (isNaN(parseInt(token.value, 16))) {
-                throw new Error(`Error: Hex number is not valid. Line: ${line}`);
+                throw new Error(
+                    `Error: Hex number is not valid. Line: ${line}`
+                );
             }
 
             current++;
             return {
-                id: 'HexNumberLiteral',
-                value: token.value
+                id: "HexNumberLiteral",
+                value: token.value,
             };
         }
 
         // Logical negation node
-        if (token.type === 'LOGICAL_NEGATION') {
-
+        if (token.type === "LOGICAL_NEGATION") {
             current++;
             return {
-                id: 'LogicalNegation',
-                value: token.value
+                id: "LogicalNegation",
+                value: token.value,
             };
         }
 
         // Logical negation node
-        if (token.type === 'PARENTHESIS') {
-
+        if (token.type === "PARENTHESIS") {
             current++;
             return {
-                id: 'Brace',
-                value: token.value
+                id: "Brace",
+                value: token.value,
             };
         }
 
         // Logical negation node
-        if (token.type === 'MUL_OPERATION') {
-
+        if (token.type === "MUL_OPERATION") {
             current++;
             return {
-                id: 'MultiplicationOperation',
-                value: token.value
+                id: "MultiplicationOperation",
+                value: token.value,
             };
         }
 
         // div node
-        if (token.type === 'DIV_OPERATION') {
-
+        if (token.type === "DIV_OPERATION") {
             current++;
             return {
-                id: 'DivideOperation',
-                value: token.value
+                id: "DivideOperation",
+                value: token.value,
             };
         }
 
         // XOR node
-        if (token.type === 'XOR_OPERATION') {
-
+        if (token.type === "XOR_OPERATION") {
             current++;
             return {
-                id: 'XOROperation',
-                value: token.value
+                id: "XOROperation",
+                value: token.value,
             };
         }
 
         // assign node
-        if (token.type === 'ASSIGN') {
-
+        if (token.type === "ASSIGN") {
             current++;
             return {
-                id: 'Assign',
-                value: token.value
+                id: "Assign",
+                value: token.value,
             };
         }
 
         // word node when expression
-        if (token.type === 'WORD' && tokens[current - 1].type !== 'TYPE' && tokens[current + 1].value === '=') {
+        if (
+            token.type === "WORD" &&
+            tokens[current - 1].type !== "TYPE" &&
+            tokens[current + 1].value === "="
+        ) {
             var node = {
-                id: 'expressionWithoutType',
+                id: "expressionWithoutType",
                 variable: token.value,
                 expression: [],
             };
@@ -347,54 +375,63 @@ const parser = (tokens) => {
             current++;
 
             while (
-                (token.type !== 'SEMICOLON') ||
-                (token.type === 'SEMICOLON' && token.value !== ';')
+                token.type !== "SEMICOLON" ||
+                (token.type === "SEMICOLON" && token.value !== ";")
             ) {
                 node.expression.push(walk());
                 token = tokens[current];
             }
             current++;
 
-            // when using not declared or not initialized variable 
-            const exp = node.expression.map(elem => {
+            // when using not declared or not initialized variable
+            const exp = node.expression.map((elem) => {
                 return elem.value;
             });
             checkErrWithVar(exp);
 
             // when variable before = not declared
-            let flag = ast.body[0].body.some(elem => {
-                if (elem.id === 'declaration' || elem.id === 'expressionWithType') {
+            let flag = ast.body[0].body.some((elem) => {
+                if (
+                    elem.id === "declaration" ||
+                    elem.id === "expressionWithType"
+                ) {
                     return elem.variable === node.variable;
                 }
             });
 
             if (!flag) {
-                throw new Error(`Error: Variable ${node.variable} is not declared. Line: ${line}`);
+                throw new Error(
+                    `Error: Variable ${node.variable} is not declared. Line: ${line}`
+                );
             }
 
             // if we have ternary expr
-            if (exp.join('').lastIndexOf('?')) {
+            if (exp.join("").lastIndexOf("?")) {
                 return parseTernaryExpr(node, exp);
             }
 
-            return { ...node, expression: node.expression.filter((elem) => elem.id !== 'Assign') };
-
+            return {
+                ...node,
+                expression: node.expression.filter(
+                    (elem) => elem.id !== "Assign"
+                ),
+            };
         }
 
         // simple node node
-        if (token.type === 'WORD') {
+        if (token.type === "WORD") {
             current++;
             return {
-                id: 'word',
-                value: token.value
+                id: "word",
+                value: token.value,
             };
         }
 
         // type node
-        if (token.type === 'TYPE' && tokens[current + 1].value !== 'main') {
+        if (token.type === "TYPE" && tokens[current + 1].value !== "main") {
             current++;
             var node = {
-                id: 'expressionWithType',
+                id: "expressionWithType",
                 type: token.value,
                 variable: tokens[current].value,
                 expression: [],
@@ -403,78 +440,89 @@ const parser = (tokens) => {
             token = tokens[++current];
 
             while (
-                (token.type !== 'SEMICOLON') ||
-                (token.type === 'SEMICOLON' && token.value !== ';')
+                token.type !== "SEMICOLON" ||
+                (token.type === "SEMICOLON" && token.value !== ";")
             ) {
                 node.expression.push(walk());
                 token = tokens[current];
             }
             current++;
 
-            // when using not declared or not initialized variable 
-            const exp = node.expression.map(elem => {
+            // when using not declared or not initialized variable
+            const exp = node.expression.map((elem) => {
                 return elem.value;
             });
             checkErrWithVar(exp);
 
             // when var already declared
-            let flag = ast.body[0].body.some(elem => {
-                if ((elem.id === 'expressionWithType' || elem.id === 'declaration') && elem.variable === node.variable) {
+            let flag = ast.body[0].body.some((elem) => {
+                if (
+                    (elem.id === "expressionWithType" ||
+                        elem.id === "declaration") &&
+                    elem.variable === node.variable
+                ) {
                     return true;
                 }
             });
 
             if (flag) {
-                throw new Error(`Error: Variable ${node.variable} is already declared. Line: ${line}`);
+                throw new Error(
+                    `Error: Variable ${node.variable} is already declared. Line: ${line}`
+                );
             }
 
             if (node.expression.length === 0) {
                 return {
-                    id: 'declaration',
+                    id: "declaration",
                     type: node.type,
-                    variable: node.variable
-                }
+                    variable: node.variable,
+                };
             }
 
             // if we have ternary expr
-            if (exp.join('').lastIndexOf('?') !== -1) {
+            if (exp.join("").lastIndexOf("?") !== -1) {
                 return parseTernaryExpr(node, exp);
             }
 
-            return { ...node, expression: node.expression.filter((elem) => elem.id !== 'Assign') };
+            return {
+                ...node,
+                expression: node.expression.filter(
+                    (elem) => elem.id !== "Assign"
+                ),
+            };
         }
 
         // semicolon node
-        if (token.type === 'SEMICOLON') {
+        if (token.type === "SEMICOLON") {
             current++;
             return {
-                id: 'semicolon',
-                value: token.value
+                id: "semicolon",
+                value: token.value,
             };
         }
-        // semicolon node
-        if (token.type === 'TERNARY_OPERATOR') {
+        // ternary node
+        if (token.type === "TERNARY_OPERATOR") {
             current++;
             return {
-                id: 'ternary',
-                value: token.value
+                id: "ternary",
+                value: token.value,
             };
         }
-        // semicolon node
-        if (token.type === 'COLON') {
+        // colon node
+        if (token.type === "COLON") {
             current++;
             return {
-                id: 'colon',
-                value: token.value
+                id: "colon",
+                value: token.value,
             };
         }
 
         throw new Error(`Unknown type:${token.type}; value: ${token.value}`);
-    }
+    };
 
     // root node
     let ast = {
-        id: 'Program',
+        id: "Program",
         body: [],
     };
 
@@ -488,8 +536,6 @@ const parser = (tokens) => {
     }
 
     return ast;
-
-}
+};
 
 module.exports = { parser };
-

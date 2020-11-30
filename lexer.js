@@ -229,7 +229,7 @@ const lexer = (input) => {
             continue;
         }
 
-        // assign token
+        // colon token
         if (char === ':') {
             tokens.push({
                 type: 'COLON',
@@ -240,7 +240,7 @@ const lexer = (input) => {
             continue;
         }
 
-        // assign token
+        // ternary token
         if (char === '?') {
             tokens.push({
                 type: 'TERNARY_OPERATOR',

@@ -2,6 +2,16 @@
 
 A compiler that converts C-code to assembler. Written in JS.
 
-# Run
+# Available scripts
 
-Install Node.js and type 'node compiler.js' in main folder.
+Launches the compiler:
+
+```
+npm run start
+```
+
+Creates an executable file:
+
+```
+npm run build
+```
