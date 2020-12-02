@@ -3,6 +3,8 @@ const parser = (tokens) => {
     var current = 0;
     let line = 1;
     let funcIndex = -1;
+    // types
+    let typeOfFunc, typeOfReturn;
 
     //func for checking errors with variables
     const checkErrWithVar = (exp) => {
@@ -91,9 +93,6 @@ const parser = (tokens) => {
         };
     };
 
-    // types
-    let typeOfFunc, typeOfReturn;
-
     const walk = () => {
         // current token
         var token = tokens[current];
@@ -140,7 +139,6 @@ const parser = (tokens) => {
             // adding params for func node
             if (token.type === "PARENTHESIS" && token.value === "(") {
                 token = tokens[++current];
-                ///!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 while (
                     token.type !== "PARENTHESIS" ||
                     (token.type === "PARENTHESIS" && token.value !== ")")
@@ -435,6 +433,41 @@ const parser = (tokens) => {
             };
         }
 
+        // call function
+        //FIX IT !!!!!!!!!!!!!!!!
+        if (
+            token.type === "WORD" &&
+            tokens[current + 1].value === "(" &&
+            tokens[current - 1].type !== "TYPE"
+        ) {
+            current++;
+            var node = {
+                id: "functionCall",
+                funcName: token.value,
+                params: [],
+            };
+            token = tokens[current];
+            if (token.type === "PARENTHESIS" && token.value === "(") {
+                token = tokens[++current];
+                while (
+                    token.type !== "PARENTHESIS" ||
+                    (token.type === "PARENTHESIS" && token.value !== ")")
+                ) {
+                    if (token.type === "COMA") {
+                        current++;
+                        token = tokens[current];
+                    } else {
+                        node.params.push(walk());
+                        token = tokens[current];
+                    }
+                }
+            }
+
+            current++;
+
+            return node;
+        }
+
         // simple node node
         if (token.type === "WORD") {
             current++;
@@ -498,7 +531,10 @@ const parser = (tokens) => {
             const exp = node.expression.map((elem) => {
                 return elem.value;
             });
-            checkErrWithVar(exp);
+
+            if (node.expression[1].id !== "functionCall") {
+                checkErrWithVar(exp);
+            }
 
             if (node.expression.length === 0) {
                 return {
@@ -519,7 +555,10 @@ const parser = (tokens) => {
                     (elem) => elem.id !== "Assign"
                 ),
             };
-        } else if (
+        }
+
+        // function parameter node
+        if (
             token.type === "TYPE" &&
             tokens[current + 1].type === "WORD" &&
             (tokens[current + 2].value === "," ||

@@ -19,6 +19,7 @@ includelib \masm32\lib\msvcrt.lib
 
 .data?
     a dd ?
+	b dd ?
 
 
 .code
@@ -63,9 +64,12 @@ negation endp
 
 main proc
 
-    mov eax, 3
+    mov eax, undefined
 	push eax
 	pop a
+	invoke multiply, a, 1
+	push eax
+	pop b
 	mov eax, 1
 	push eax
 
