@@ -261,12 +261,17 @@ const generateAsmCodeFromFuncBody = (funcBody) => {
             generatedAsm.push(`pop ${funcBody[i].variable}`);
             uniqueNumber++;
         } else if (funcBody[i].id === 'Return') {
-            let expression = funcBody[i].body.map((elem) => {
-                return elem.value;
-            });
-            const generatedReturn = [];
-            generatedReturn.push(...generateExprAsmCode(expression));
-            generatedAsm.push(...generatedReturn);
+            if (funcBody[i].body[0].id === 'functionCall') {
+                generatedAsm.push(`invoke ${funcBody[i].body[0].funcName}`);
+                generatedAsm.push(`push eax`);
+            } else {
+                let expression = funcBody[i].body.map((elem) => {
+                    return elem.value;
+                });
+                const generatedReturn = [];
+                generatedReturn.push(...generateExprAsmCode(expression));
+                generatedAsm.push(...generatedReturn);
+            }
         }
     }
 

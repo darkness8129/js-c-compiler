@@ -68,10 +68,8 @@ func proc
 func endp
 
 main proc 
-    local b:DWORD
+    
     invoke func
-	mov b, eax
-	mov eax, b
 	push eax
     pop eax
     

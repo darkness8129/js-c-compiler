@@ -3,6 +3,5 @@ int func(){
 }
 
 int main(){
-    int b = func();
-    return b;
+    return func();
 }
