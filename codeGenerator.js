@@ -208,17 +208,25 @@ const generateAsmCodeFromFuncBody = (funcBody) => {
             funcBody[i].id === 'expressionWithType' ||
             funcBody[i].id === 'expressionWithoutType'
         ) {
-            let expression = funcBody[i].expression.map((elem) => {
-                if (elem.id === 'HexNumberLiteral') {
-                    return parseInt(elem.value, 16);
-                } else if (elem.id === 'NumberLiteral') {
-                    return parseInt(elem.value, 10);
-                } else {
-                    return elem.value;
-                }
-            });
-            generatedAsm.push(...generateExprAsmCode(expression));
-            generatedAsm.push(`pop ${funcBody[i].variable}`);
+            ///!!!!!!!!!!!!!!!!!!!!
+            if (funcBody[i].expression[0].id === 'functionCall') {
+                generatedAsm.push(
+                    `invoke ${funcBody[i].expression[0].funcName}`
+                );
+                generatedAsm.push(`mov ${funcBody[i].variable}, eax`);
+            } else {
+                let expression = funcBody[i].expression.map((elem) => {
+                    if (elem.id === 'HexNumberLiteral') {
+                        return parseInt(elem.value, 16);
+                    } else if (elem.id === 'NumberLiteral') {
+                        return parseInt(elem.value, 10);
+                    } else {
+                        return elem.value;
+                    }
+                });
+                generatedAsm.push(...generateExprAsmCode(expression));
+                generatedAsm.push(`pop ${funcBody[i].variable}`);
+            }
         } else if (funcBody[i].id === 'ternaryExpression') {
             const genInt = (part) => {
                 return funcBody[i][part].map((elem) => {
@@ -371,13 +379,23 @@ const getFuncs = (ast) => {
     return funcs;
 };
 
-const generateAsmFuncs = (asmFuncBodies, variablesAsm) => {
+const generateAsmFuncs = (asmFuncBodies, variablesAsm, funcs) => {
     let asmCodeFuncs = [];
 
     for (let i = 0; i < asmFuncBodies.length; i++) {
         let variables = [...variablesAsm].filter((elem) => {
             return elem.func === asmFuncBodies[i].func;
         });
+
+        let func = [...funcs].filter((elem) => {
+            return elem.name === asmFuncBodies[i].func;
+        });
+
+        let params = func[0].params
+            .map((el) => {
+                return `${el.variable}:DWORD`;
+            })
+            .join(' ');
 
         let mainPart;
         if (asmFuncBodies[i].func === 'main') {
@@ -390,7 +408,7 @@ const generateAsmFuncs = (asmFuncBodies, variablesAsm) => {
         }
 
         let asm = `
-${asmFuncBodies[i].func} proc
+${asmFuncBodies[i].func} proc ${params}
     ${variables[0].vars.join('\n\t')}
     ${asmFuncBodies[i].asmCode.join('\n\t')}
     pop eax
@@ -408,7 +426,7 @@ const codeGenerator = (ast) => {
     const asmCode = [];
     // func body
     const funcs = getFuncs(ast);
-    console.log(JSON.stringify(funcs, null, 2));
+    //console.log(JSON.stringify(funcs, null, 2));
     // variables
     const variables = getVarsForEachFunc(funcs);
     //console.log(JSON.stringify(variables, null, 2));
@@ -418,8 +436,8 @@ const codeGenerator = (ast) => {
     // generated variables in asm
     const variablesAsm = getAsmVariablesForEachFunc(variables);
     //console.log(JSON.stringify(variablesAsm, null, 2));
-    const asmFuncs = generateAsmFuncs(asmFuncBodies, variablesAsm);
-    console.log(asmFuncs);
+    const asmFuncs = generateAsmFuncs(asmFuncBodies, variablesAsm, funcs);
+    //console.log(asmFuncs);
 
     const includes = `
 include \\masm32\\include\\windows.inc

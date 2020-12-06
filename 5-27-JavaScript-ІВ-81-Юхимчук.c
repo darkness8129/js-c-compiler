@@ -1,8 +1,8 @@
-int func(int a, int b){
+int func(){
     return 3;
 }
 
 int main(){
-    int b = 1*2;
+    int b = func();
     return b;
 }
