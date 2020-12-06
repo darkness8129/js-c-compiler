@@ -1,4 +1,4 @@
-const fs = require("fs");
+const fs = require('fs');
 
 // func for generating asm from expr
 const generateExprAsmCode = (expressions) => {
@@ -8,19 +8,19 @@ const generateExprAsmCode = (expressions) => {
     // if one value in return
     if (
         expressions.length === 1 &&
-        expressions[0] !== "eax" &&
-        expressions[0] !== "ebx"
+        expressions[0] !== 'eax' &&
+        expressions[0] !== 'ebx'
     ) {
         asmCode.push(`mov eax, ${expressions[0]}`);
         asmCode.push(`push eax`);
     }
 
     for (let i = 0; i < expressions.length; i++) {
-        if (expressions[i] === "(") {
+        if (expressions[i] === '(') {
             // slice expr in ()
             let sliceExpr = expressions.slice(
-                expressions.indexOf("(") + 1,
-                expressions.lastIndexOf(")")
+                expressions.indexOf('(') + 1,
+                expressions.lastIndexOf(')')
             );
 
             // recursion in ()
@@ -28,15 +28,15 @@ const generateExprAsmCode = (expressions) => {
 
             // because previous code rewrite this and we do this again
             sliceExpr = expressions.slice(
-                expressions.indexOf("(") + 1,
-                expressions.indexOf(")")
+                expressions.indexOf('(') + 1,
+                expressions.indexOf(')')
             );
 
             // replace (...) on eax
             expressions.splice(
-                expressions.indexOf("("),
+                expressions.indexOf('('),
                 sliceExpr.length + 2,
-                "eax"
+                'eax'
             );
 
             // when ()some operation()
@@ -47,12 +47,12 @@ const generateExprAsmCode = (expressions) => {
 
     // NEGATION
     for (let i = 0; i < expressions.length; i++) {
-        if (expressions[i] === "!") {
+        if (expressions[i] === '!') {
             //first number after !+number
 
             var number = expressions
                 .slice(i)
-                .join("")
+                .join('')
                 .match(/\d+|eax/)[0];
             var numberIndex = expressions.indexOf(number);
 
@@ -60,8 +60,8 @@ const generateExprAsmCode = (expressions) => {
             let negations = expressions.slice(i, numberIndex);
 
             if (
-                expressions[i + negations.length] === "eax" ||
-                expressions[i + negations.length] === "ebx"
+                expressions[i + negations.length] === 'eax' ||
+                expressions[i + negations.length] === 'ebx'
             ) {
                 asmCode.push(`pop ${expressions[i + negations.length]}`);
             }
@@ -80,7 +80,7 @@ const generateExprAsmCode = (expressions) => {
             asmCode.push(`push eax`);
 
             // replace !!...number on eax
-            expressions.splice(i, negations.length + 1, "eax");
+            expressions.splice(i, negations.length + 1, 'eax');
 
             // recursion if !(...)
             asmCode.push(...generateExprAsmCode(expressions));
@@ -90,14 +90,14 @@ const generateExprAsmCode = (expressions) => {
 
     // MULTIPLY AND DIVISION
     for (let i = 0; i < expressions.length; i++) {
-        if (expressions[i] === "*") {
-            if (expressions[i - 1] === "eax" && expressions[i + 1] === "eax") {
+        if (expressions[i] === '*') {
+            if (expressions[i - 1] === 'eax' && expressions[i + 1] === 'eax') {
                 asmCode.push(`pop ebx`);
                 asmCode.push(`pop eax`);
                 asmCode.push(`invoke multiply, eax, ebx`);
             } else if (
-                expressions[i - 1] === "eax" ||
-                expressions[i + 1] === "eax"
+                expressions[i - 1] === 'eax' ||
+                expressions[i + 1] === 'eax'
             ) {
                 asmCode.push(`pop eax`);
                 asmCode.push(
@@ -116,19 +116,19 @@ const generateExprAsmCode = (expressions) => {
             asmCode.push(`push eax`);
 
             // num operation num replace on eax
-            expressions.splice(i - 1, 3, "eax");
+            expressions.splice(i - 1, 3, 'eax');
 
             // recursion
             asmCode.push(...generateExprAsmCode(expressions));
             break;
-        } else if (expressions[i] === "/") {
-            if (expressions[i - 1] === "eax" && expressions[i + 1] === "eax") {
+        } else if (expressions[i] === '/') {
+            if (expressions[i - 1] === 'eax' && expressions[i + 1] === 'eax') {
                 asmCode.push(`pop ebx`);
                 asmCode.push(`pop eax`);
                 asmCode.push(`invoke divide, eax, ebx`);
             } else if (
-                expressions[i - 1] === "eax" ||
-                expressions[i + 1] === "eax"
+                expressions[i - 1] === 'eax' ||
+                expressions[i + 1] === 'eax'
             ) {
                 asmCode.push(`pop eax`);
                 asmCode.push(
@@ -147,7 +147,7 @@ const generateExprAsmCode = (expressions) => {
             asmCode.push(`push eax`);
 
             // num operation num replace on eax
-            expressions.splice(i - 1, 3, "eax");
+            expressions.splice(i - 1, 3, 'eax');
 
             // recursion
             asmCode.push(...generateExprAsmCode(expressions));
@@ -157,14 +157,14 @@ const generateExprAsmCode = (expressions) => {
 
     // XOR
     for (let i = 0; i < expressions.length; i++) {
-        if (expressions[i] === "^") {
-            if (expressions[i - 1] === "eax" && expressions[i + 1] === "eax") {
+        if (expressions[i] === '^') {
+            if (expressions[i - 1] === 'eax' && expressions[i + 1] === 'eax') {
                 asmCode.push(`pop ebx`);
                 asmCode.push(`pop eax`);
                 asmCode.push(`invoke xorOperation, eax, ebx`);
             } else if (
-                expressions[i - 1] === "eax" ||
-                expressions[i + 1] === "eax"
+                expressions[i - 1] === 'eax' ||
+                expressions[i + 1] === 'eax'
             ) {
                 asmCode.push(`pop eax`);
                 asmCode.push(
@@ -183,7 +183,7 @@ const generateExprAsmCode = (expressions) => {
             asmCode.push(`push eax`);
 
             // num operation num replace on eax
-            expressions.splice(i - 1, 3, "eax");
+            expressions.splice(i - 1, 3, 'eax');
 
             // recursion
             asmCode.push(...generateExprAsmCode(expressions));
@@ -202,16 +202,16 @@ const generateAsmCodeFromFuncBody = (funcBody) => {
     let uniqueNumber = 1;
 
     for (let i = 0; i < funcBody.length; i++) {
-        if (funcBody[i].id === "declaration") {
+        if (funcBody[i].id === 'declaration') {
             continue;
         } else if (
-            funcBody[i].id === "expressionWithType" ||
-            funcBody[i].id === "expressionWithoutType"
+            funcBody[i].id === 'expressionWithType' ||
+            funcBody[i].id === 'expressionWithoutType'
         ) {
             let expression = funcBody[i].expression.map((elem) => {
-                if (elem.id === "HexNumberLiteral") {
+                if (elem.id === 'HexNumberLiteral') {
                     return parseInt(elem.value, 16);
-                } else if (elem.id === "NumberLiteral") {
+                } else if (elem.id === 'NumberLiteral') {
                     return parseInt(elem.value, 10);
                 } else {
                     return elem.value;
@@ -219,12 +219,12 @@ const generateAsmCodeFromFuncBody = (funcBody) => {
             });
             generatedAsm.push(...generateExprAsmCode(expression));
             generatedAsm.push(`pop ${funcBody[i].variable}`);
-        } else if (funcBody[i].id === "ternaryExpression") {
+        } else if (funcBody[i].id === 'ternaryExpression') {
             const genInt = (part) => {
                 return funcBody[i][part].map((elem) => {
-                    if (elem.id === "HexNumberLiteral") {
+                    if (elem.id === 'HexNumberLiteral') {
                         return parseInt(elem.value, 16);
-                    } else if (elem.id === "NumberLiteral") {
+                    } else if (elem.id === 'NumberLiteral') {
                         return parseInt(elem.value, 10);
                     } else {
                         return elem.value;
@@ -232,9 +232,9 @@ const generateAsmCodeFromFuncBody = (funcBody) => {
                 });
             };
 
-            let condition = genInt("condition");
-            let firstOperand = genInt("firstOperand");
-            let secondOperand = genInt("secondOperand");
+            let condition = genInt('condition');
+            let firstOperand = genInt('firstOperand');
+            let secondOperand = genInt('secondOperand');
             generatedAsm.push(...generateExprAsmCode(condition));
             generatedAsm.push(`cmp eax, 0`);
             generatedAsm.push(`je falseOperand${uniqueNumber}`);
@@ -252,7 +252,7 @@ const generateAsmCodeFromFuncBody = (funcBody) => {
             generatedAsm.push(`continue${uniqueNumber}:`);
             generatedAsm.push(`pop ${funcBody[i].variable}`);
             uniqueNumber++;
-        } else if (funcBody[i].id === "Return") {
+        } else if (funcBody[i].id === 'Return') {
             let expression = funcBody[i].body.map((elem) => {
                 return elem.value;
             });
@@ -270,7 +270,7 @@ const generateDeclarationOfVariables = (variables) => {
     const generatedAsm = [];
 
     for (let i = 0; i < variables.length; i++) {
-        generatedAsm.push(`${variables[i].variable} dd ?`);
+        generatedAsm.push(`local ${variables[i].variable}:DWORD`);
     }
 
     return generatedAsm;
@@ -281,27 +281,27 @@ const getVariables = (funcBody) => {
     const variables = [];
 
     funcBody.map((elem) => {
-        if (elem.id === "declaration") {
+        if (elem.id === 'declaration') {
             variables.push({
                 variable: elem.variable,
                 type: elem.type,
                 isDeclared: true,
             });
-        } else if (elem.id === "expressionWithType") {
+        } else if (elem.id === 'expressionWithType') {
             variables.push({
                 variable: elem.variable,
                 type: elem.type,
                 isDeclared: true,
                 isInitialized: true,
             });
-        } else if (elem.id === "ternaryExpression") {
+        } else if (elem.id === 'ternaryExpression') {
             const isVariable = variables.some((variable) => {
                 return variable.variable === elem.variable;
             });
             if (!isVariable) {
                 variables.push({ variable: elem.variable, type: elem.type });
             }
-        } else if (elem.id === "expressionWithoutType") {
+        } else if (elem.id === 'expressionWithoutType') {
             const isVariable = variables.some((variable) => {
                 return variable.variable === elem.variable;
             });
@@ -320,27 +320,86 @@ const getVariables = (funcBody) => {
     return variables;
 };
 
-// func for getting return expr
-const getReturnExpr = (funcBody) => {
-    return funcBody[funcBody.length - 1].body.map((node) => {
-        if (node.id === "NumberLiteral") {
-            return `${parseInt(node.value, 10)}`;
-        } else if (node.id === "Brace") {
-            return node.value;
-        } else if (node.id === "word") {
-            return node.value;
-        } else if (node.id === "XOROperation") {
-            return node.value;
-        } else if (node.id === "DivideOperation") {
-            return node.value;
-        } else if (node.id === "HexNumberLiteral") {
-            return `${parseInt(node.value, 16)}`;
-        } else if (node.id === "LogicalNegation") {
-            return node.value;
-        } else if (node.id === "MultiplicationOperation") {
-            return node.value;
+const getVarsForEachFunc = (funcs) => {
+    let variables = [];
+    for (let i = 0; i < funcs.length; i++) {
+        let v = getVariables(funcs[i].body);
+        variables.push({
+            func: funcs[i].name,
+            vars: v,
+        });
+    }
+
+    return variables;
+};
+
+const getAsmCodeForEachFuncBody = (funcs) => {
+    let asm = [];
+    for (let i = 0; i < funcs.length; i++) {
+        let a = generateAsmCodeFromFuncBody(funcs[i].body);
+        asm.push({
+            func: funcs[i].name,
+            asmCode: a,
+        });
+    }
+
+    return asm;
+};
+
+const getAsmVariablesForEachFunc = (variables) => {
+    let varsAsm = [];
+    for (let i = 0; i < variables.length; i++) {
+        let v = generateDeclarationOfVariables(variables[i].vars);
+        varsAsm.push({
+            func: variables[i].func,
+            vars: v,
+        });
+    }
+
+    return varsAsm;
+};
+
+const getFuncs = (ast) => {
+    let funcs = [];
+
+    for (let i = 0; i < ast.body.length; i++) {
+        if (ast.body[i].id === 'Function') {
+            funcs.push(ast.body[i]);
         }
-    });
+    }
+
+    return funcs;
+};
+
+const generateAsmFuncs = (asmFuncBodies, variablesAsm) => {
+    let asmCodeFuncs = [];
+
+    for (let i = 0; i < asmFuncBodies.length; i++) {
+        let variables = [...variablesAsm].filter((elem) => {
+            return elem.func === asmFuncBodies[i].func;
+        });
+
+        let mainPart;
+        if (asmFuncBodies[i].func === 'main') {
+            mainPart = `
+    print str$(eax)
+    print chr$(13, 10)
+    mov eax, input("ENTER to continue. . . ")`;
+        } else {
+            mainPart = '';
+        }
+
+        let asm = `
+${asmFuncBodies[i].func} proc
+    ${variables[0].vars.join('\n\t')}
+    ${asmFuncBodies[i].asmCode.join('\n\t')}
+    pop eax
+    ${mainPart}
+    ret
+${asmFuncBodies[i].func} endp`;
+        asmCodeFuncs.push(asm);
+    }
+    return asmCodeFuncs;
 };
 
 // main func for generating
@@ -348,15 +407,20 @@ const codeGenerator = (ast) => {
     //all asm code
     const asmCode = [];
     // func body
-    const FuncBody = walk(ast);
-    // return expression
-    const returnExpression = getReturnExpr(FuncBody);
+    const funcs = getFuncs(ast);
+    console.log(JSON.stringify(funcs, null, 2));
     // variables
-    const variables = getVariables(FuncBody);
+    const variables = getVarsForEachFunc(funcs);
+    //console.log(JSON.stringify(variables, null, 2));
     // asm code of func body
-    const asmFuncBody = generateAsmCodeFromFuncBody(FuncBody);
+    const asmFuncBodies = getAsmCodeForEachFuncBody(funcs);
+    //console.log(JSON.stringify(asmFuncBodies, null, 2));
     // generated variables in asm
-    const variabledAsm = generateDeclarationOfVariables(variables);
+    const variablesAsm = getAsmVariablesForEachFunc(variables);
+    //console.log(JSON.stringify(variablesAsm, null, 2));
+    const asmFuncs = generateAsmFuncs(asmFuncBodies, variablesAsm);
+    console.log(asmFuncs);
+
     const includes = `
 include \\masm32\\include\\windows.inc
 include \\masm32\\macros\\macros.asm
@@ -374,13 +438,10 @@ includelib \\masm32\\lib\\msvcrt.lib`;
 .486
 .model flat, stdcall
 option casemap : none
-${includes}
-`;
+${includes}`;
     // data of asm code
     const data = `
-.data?
-    ${variabledAsm.join("\n\t")}
-`;
+.data?`;
 
     const multiply = `
 multiply proc num1:DWORD, num2:DWORD
@@ -397,6 +458,7 @@ divide proc num1:DWORD, num2:DWORD
   idiv num2
   ret
 divide endp`;
+
     const xorOperation = `
 xorOperation proc num1:DWORD, num2:DWORD
   mov eax, num1
@@ -420,19 +482,6 @@ negation proc num1: DWORD
     ret
 negation endp`;
 
-    const mainProc = `
-main proc
-
-    ${asmFuncBody.join("\n\t")}
-
-    pop eax
-    print str$(eax)
-    print chr$(13, 10)
-    mov eax, input("ENTER to continue. . . ")
-
-    ret
-main endp`;
-
     // code of asm code
     const code = `
 .code
@@ -443,7 +492,7 @@ ${multiply}
 ${divide}
 ${xorOperation}
 ${negation}
-${mainProc}
+${asmFuncs.join('\n')}
 end start`;
 
     // push all parts of asm code in arr
@@ -451,19 +500,10 @@ end start`;
     asmCode.push(data);
     asmCode.push(code);
 
-    // recursion func to get value of return
-    function walk(node) {
-        if (node.id === "Program") {
-            return walk(...node.body);
-        } else if (node.id === "Function" && node.name === "main") {
-            return [...node.body];
-        }
-    }
-
     // write all asm code in file with separating by \n
     fs.writeFile(
-        "./5-27-JavaScript-ІВ-81-Юхимчук.asm",
-        asmCode.join("\n"),
+        './5-27-JavaScript-ІВ-81-Юхимчук.asm',
+        asmCode.join('\n'),
         (err) => {
             if (err) throw err;
         }

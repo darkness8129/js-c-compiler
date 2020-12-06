@@ -16,11 +16,7 @@ includelib \masm32\lib\user32.lib
 includelib \masm32\lib\kernel32.lib
 includelib \masm32\lib\msvcrt.lib
 
-
 .data?
-    a dd ?
-	b dd ?
-
 
 .code
 start:
@@ -62,22 +58,27 @@ negation proc num1: DWORD
     ret
 negation endp
 
-main proc
-
-    mov eax, undefined
+func proc
+    
+    mov eax, 3
 	push eax
-	pop a
-	invoke multiply, a, 1
+    pop eax
+    
+    ret
+func endp
+
+main proc
+    local b:DWORD
+    invoke multiply, 1, 2
 	push eax
 	pop b
-	mov eax, 1
+	mov eax, b
 	push eax
-
     pop eax
+    
     print str$(eax)
     print chr$(13, 10)
     mov eax, input("ENTER to continue. . . ")
-
     ret
 main endp
 end start

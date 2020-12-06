@@ -434,7 +434,6 @@ const parser = (tokens) => {
         }
 
         // call function
-        //FIX IT !!!!!!!!!!!!!!!!
         if (
             token.type === "WORD" &&
             tokens[current + 1].value === "(" &&
