@@ -17,6 +17,7 @@ const parser = (tokens) => {
             ) {
                 let flag1 = false;
                 let body = ast.body[funcIndex].body;
+                let params = ast.body[funcIndex].params;
                 for (let j = 0; j < body.length; j++) {
                     if (
                         body[j].id === 'expressionWithType' ||
@@ -41,6 +42,14 @@ const parser = (tokens) => {
                             flag2 = true;
                             break;
                         }
+                    }
+                }
+
+                for (let j = 0; j < params.length; j++) {
+                    if (params[j].variable === exp[i]) {
+                        flag1 = true;
+                        flag2 = true;
+                        break;
                     }
                 }
 

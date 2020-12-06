@@ -201,6 +201,23 @@ const generateAsmCodeFromFuncBody = (funcBody) => {
     // to get unique name of true, false, continue
     let uniqueNumber = 1;
 
+    const generateInvoke = (funcInvoke) => {
+        let generatedInvoke = [];
+        if (funcInvoke.params.length === 0) {
+            generatedInvoke.push(`invoke ${funcInvoke.funcName}`);
+        } else {
+            let params = [...funcInvoke.params].map((elem) => elem.value);
+            for (let i = 0; i < params.length; i++) {
+                if (i !== params.length - 1) {
+                    params[i] += ', ';
+                }
+            }
+            params = params.join('');
+            generatedInvoke.push(`invoke ${funcInvoke.funcName}, ${params}`);
+        }
+        return generatedInvoke;
+    };
+
     for (let i = 0; i < funcBody.length; i++) {
         if (funcBody[i].id === 'declaration') {
             continue;
@@ -208,11 +225,8 @@ const generateAsmCodeFromFuncBody = (funcBody) => {
             funcBody[i].id === 'expressionWithType' ||
             funcBody[i].id === 'expressionWithoutType'
         ) {
-            ///!!!!!!!!!!!!!!!!!!!!
             if (funcBody[i].expression[0].id === 'functionCall') {
-                generatedAsm.push(
-                    `invoke ${funcBody[i].expression[0].funcName}`
-                );
+                generatedAsm.push(...generateInvoke(funcBody[i].expression[0]));
                 generatedAsm.push(`mov ${funcBody[i].variable}, eax`);
             } else {
                 let expression = funcBody[i].expression.map((elem) => {
@@ -262,7 +276,7 @@ const generateAsmCodeFromFuncBody = (funcBody) => {
             uniqueNumber++;
         } else if (funcBody[i].id === 'Return') {
             if (funcBody[i].body[0].id === 'functionCall') {
-                generatedAsm.push(`invoke ${funcBody[i].body[0].funcName}`);
+                generatedAsm.push(...generateInvoke(funcBody[i].body[0]));
                 generatedAsm.push(`push eax`);
             } else {
                 let expression = funcBody[i].body.map((elem) => {
@@ -396,11 +410,16 @@ const generateAsmFuncs = (asmFuncBodies, variablesAsm, funcs) => {
             return elem.name === asmFuncBodies[i].func;
         });
 
-        let params = func[0].params
-            .map((el) => {
-                return `${el.variable}:DWORD`;
-            })
-            .join(' ');
+        let params = func[0].params.map((el) => {
+            return `${el.variable}:DWORD`;
+        });
+
+        for (let j = 0; j < params.length; j++) {
+            if (j !== params.length - 1) {
+                params[j] += ', ';
+            }
+        }
+        params = params.join('');
 
         let mainPart;
         if (asmFuncBodies[i].func === 'main') {
