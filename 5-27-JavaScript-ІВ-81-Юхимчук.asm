@@ -58,15 +58,9 @@ negation proc num1: DWORD
     ret
 negation endp
 
-func proc a:DWORD, b:DWORD
-    local k:DWORD
-    mov eax, 4
-	push eax
-	pop k
-	invoke multiply, a, b
-	push eax
-	pop eax
-	invoke multiply, eax, k
+func proc 
+    
+    mov eax, 1
 	push eax
     pop eax
     
@@ -74,10 +68,8 @@ func proc a:DWORD, b:DWORD
 func endp
 
 main proc 
-    local a:DWORD
-    invoke func, 2, 3
-	mov a, eax
-	mov eax, a
+    
+    mov eax, 2
 	push eax
     pop eax
     

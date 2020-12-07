@@ -110,6 +110,7 @@ const parser = (tokens) => {
         if (token.type === 'LINEFLAG') {
             current++;
             line++;
+
             return;
         }
         // function node
@@ -129,7 +130,7 @@ const parser = (tokens) => {
             token = tokens[++current];
 
             var node = {
-                id: 'Function',
+                id: 'functionDefinition',
                 name: token.value,
                 type: type,
                 params: [],
@@ -162,11 +163,26 @@ const parser = (tokens) => {
                 }
 
                 current++;
+                if (tokens[current].value === ';') {
+                    current++;
+                    return {
+                        id: 'functionDeclaration',
+                        name: node.name,
+                        type: node.type,
+                        params: [...node.params],
+                    };
+                }
 
-                // we can not write smth after ()
-                if (tokens[current].type !== 'CURLY') {
-                    token = tokens[++current];
-                    throw new Error(`Error: Unexpected token. Line: ${line}`);
+                let flag = ast.body.some((elem) => {
+                    if (elem.id === 'functionDefinition') {
+                        return elem.name === node.name;
+                    }
+                });
+
+                if (flag) {
+                    throw new Error(
+                        `Error! Function ${node.name} is already defined. Line:${line}`
+                    );
                 }
 
                 return node;
@@ -212,6 +228,7 @@ const parser = (tokens) => {
             }
 
             current++;
+            line++;
 
             return node;
         }
@@ -292,11 +309,6 @@ const parser = (tokens) => {
             } else {
                 typeOfReturn = 'float';
             }
-
-            // check types
-            // if (typeOfFunc === 'int' && typeOfReturn === 'float') {
-            //     throw new Error(`Error: Return type has not correct type. Line: ${line}`);
-            // }
 
             return {
                 id: 'NumberLiteral',
@@ -472,6 +484,17 @@ const parser = (tokens) => {
                 }
             }
 
+            let flag = ast.body.some((elem) => {
+                if (elem.id === 'functionDefinition') {
+                    return elem.name === node.funcName;
+                }
+            });
+
+            if (!flag) {
+                throw new Error(
+                    `Error! Function ${node.funcName} is not declared. Line:${line}`
+                );
+            }
             current++;
 
             return node;

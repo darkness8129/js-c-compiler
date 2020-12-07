@@ -390,7 +390,7 @@ const getFuncs = (ast) => {
     let funcs = [];
 
     for (let i = 0; i < ast.body.length; i++) {
-        if (ast.body[i].id === 'Function') {
+        if (ast.body[i].id === 'functionDefinition') {
             funcs.push(ast.body[i]);
         }
     }

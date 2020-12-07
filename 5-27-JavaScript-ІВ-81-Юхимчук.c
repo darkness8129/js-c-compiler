@@ -1,8 +1,6 @@
-int func(int a, int b){
-    int k = 4;
-    return a*b*k;
+int func(){
+    return 1;
 }
 int main(){
-    int a = func(2,3);
-    return a;
+    return 2;
 }
