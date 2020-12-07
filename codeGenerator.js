@@ -201,6 +201,7 @@ const generateAsmCodeFromFuncBody = (funcBody) => {
     // to get unique name of true, false, continue
     let uniqueNumber = 1;
 
+    // generate invoke construction
     const generateInvoke = (funcInvoke) => {
         let generatedInvoke = [];
         if (funcInvoke.params.length === 0) {
@@ -347,6 +348,7 @@ const getVariables = (funcBody) => {
     return variables;
 };
 
+// vars for all funcs
 const getVarsForEachFunc = (funcs) => {
     let variables = [];
     for (let i = 0; i < funcs.length; i++) {
@@ -360,6 +362,7 @@ const getVarsForEachFunc = (funcs) => {
     return variables;
 };
 
+// asm for all func bodies
 const getAsmCodeForEachFuncBody = (funcs) => {
     let asm = [];
     for (let i = 0; i < funcs.length; i++) {
@@ -373,6 +376,7 @@ const getAsmCodeForEachFuncBody = (funcs) => {
     return asm;
 };
 
+// asm for all func variables
 const getAsmVariablesForEachFunc = (variables) => {
     let varsAsm = [];
     for (let i = 0; i < variables.length; i++) {
@@ -386,6 +390,7 @@ const getAsmVariablesForEachFunc = (variables) => {
     return varsAsm;
 };
 
+// get funcs from ast
 const getFuncs = (ast) => {
     let funcs = [];
 
@@ -398,6 +403,7 @@ const getFuncs = (ast) => {
     return funcs;
 };
 
+// generate full asm code for all funcs
 const generateAsmFuncs = (asmFuncBodies, variablesAsm, funcs) => {
     let asmCodeFuncs = [];
 

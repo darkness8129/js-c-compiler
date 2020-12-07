@@ -1,6 +1,6 @@
-int func(){
-    return 1;
+int func(int a){
+    return a;
 }
 int main(){
-    return 2;
+    return func(1);
 }

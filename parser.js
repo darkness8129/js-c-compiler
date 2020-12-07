@@ -490,11 +490,32 @@ const parser = (tokens) => {
                 }
             });
 
+            let paramsFlag = true;
+            let functionInAst = ast.body.filter((elem) => {
+                if (
+                    elem.id === 'functionDefinition' &&
+                    elem.name === node.funcName
+                ) {
+                    return elem;
+                }
+            });
+
+            if (functionInAst[0].params.length !== node.params.length) {
+                paramsFlag = false;
+            }
+
+            if (!paramsFlag) {
+                throw new Error(
+                    `Error! Inappropriate number of parameters. Line:${line}`
+                );
+            }
+
             if (!flag) {
                 throw new Error(
                     `Error! Function ${node.funcName} is not declared. Line:${line}`
                 );
             }
+
             current++;
 
             return node;
