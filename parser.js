@@ -390,6 +390,7 @@ const parser = (tokens) => {
         if (
             token.type === 'WORD' &&
             tokens[current - 1].type !== 'TYPE' &&
+            tokens[current - 1].type !== 'RETURN' &&
             (tokens[current + 1].value === '=' ||
                 tokens[current + 1].value === '^')
         ) {
@@ -409,7 +410,6 @@ const parser = (tokens) => {
 
             // here token =
             current++;
-            console.log(tokens[current]);
 
             while (
                 token.type !== 'SEMICOLON' ||
@@ -485,32 +485,35 @@ const parser = (tokens) => {
             }
 
             let flag = ast.body.some((elem) => {
-                if (elem.id === 'functionDefinition') {
+                if (
+                    elem.id === 'functionDefinition' ||
+                    elem.id === 'functionDeclaration'
+                ) {
                     return elem.name === node.funcName;
                 }
             });
+            if (flag) {
+                let paramsFlag = true;
+                let functionInAst = ast.body.filter((elem) => {
+                    if (
+                        (elem.id === 'functionDefinition' ||
+                            elem.id === 'functionDeclaration') &&
+                        elem.name === node.funcName
+                    ) {
+                        return elem;
+                    }
+                });
 
-            let paramsFlag = true;
-            let functionInAst = ast.body.filter((elem) => {
-                if (
-                    elem.id === 'functionDefinition' &&
-                    elem.name === node.funcName
-                ) {
-                    return elem;
+                if (functionInAst[0].params.length !== node.params.length) {
+                    paramsFlag = false;
                 }
-            });
 
-            if (functionInAst[0].params.length !== node.params.length) {
-                paramsFlag = false;
-            }
-
-            if (!paramsFlag) {
-                throw new Error(
-                    `Error! Inappropriate number of parameters. Line:${line}`
-                );
-            }
-
-            if (!flag) {
+                if (!paramsFlag) {
+                    throw new Error(
+                        `Error! Inappropriate number of parameters. Line:${line}`
+                    );
+                }
+            } else {
                 throw new Error(
                     `Error! Function ${node.funcName} is not declared. Line:${line}`
                 );

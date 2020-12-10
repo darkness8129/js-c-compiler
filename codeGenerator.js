@@ -406,6 +406,7 @@ const getFuncs = (ast) => {
 // generate full asm code for all funcs
 const generateAsmFuncs = (asmFuncBodies, variablesAsm, funcs) => {
     let asmCodeFuncs = [];
+    let mainFunc;
 
     for (let i = 0; i < asmFuncBodies.length; i++) {
         let variables = [...variablesAsm].filter((elem) => {
@@ -445,8 +446,15 @@ ${asmFuncBodies[i].func} proc ${params}
     ${mainPart}
     ret
 ${asmFuncBodies[i].func} endp`;
-        asmCodeFuncs.push(asm);
+
+        if (asmFuncBodies[i].func === 'main') {
+            mainFunc = asm;
+        } else {
+            asmCodeFuncs.push(asm);
+        }
     }
+    asmCodeFuncs.push(mainFunc);
+
     return asmCodeFuncs;
 };
 
@@ -467,7 +475,7 @@ const codeGenerator = (ast) => {
     const variablesAsm = getAsmVariablesForEachFunc(variables);
     //console.log(JSON.stringify(variablesAsm, null, 2));
     const asmFuncs = generateAsmFuncs(asmFuncBodies, variablesAsm, funcs);
-    //console.log(asmFuncs);
+    // push main to the end of arr
 
     const includes = `
 include \\masm32\\include\\windows.inc
@@ -556,6 +564,7 @@ end start`;
             if (err) throw err;
         }
     );
+    return asmCode;
 };
 
 module.exports = { codeGenerator };

@@ -58,18 +58,18 @@ negation proc num1: DWORD
     ret
 negation endp
 
-func proc a:DWORD
+foo proc a:DWORD
     
-    mov eax, a
+    invoke multiply, a, 3
 	push eax
     pop eax
     
     ret
-func endp
+foo endp
 
 main proc 
     
-    invoke func, 1
+    invoke foo, 2
 	push eax
     pop eax
     

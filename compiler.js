@@ -13,9 +13,10 @@ fs.readFile('./5-27-JavaScript-ІВ-81-Юхимчук.c', 'utf-8', (err, input) 
             const tokens = lexerModule.lexer(input);
             let ast = parserModule.parser(tokens);
             console.log(JSON.stringify(ast, null, 2));
-            codeGeneratorModule.codeGenerator(ast);
+            let asmCode = codeGeneratorModule.codeGenerator(ast);
+            console.log(asmCode.join('\n'));
         } catch (err) {
-            console.log(err);
+            console.log(err.message);
         }
 
         // enter to close console
