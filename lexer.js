@@ -23,8 +23,8 @@ const lexer = (input) => {
             current++;
 
             tokens.push({
-                type: "LINEFLAG",
-                value: "\r",
+                type: 'LINEFLAG',
+                value: '\r',
             });
 
             continue;
@@ -37,7 +37,7 @@ const lexer = (input) => {
         }
 
         // return word and some others tokens
-        if (LETTERS.test(char) || char === "_") {
+        if (LETTERS.test(char) || char === '_') {
             var value = char;
 
             // for checking return int float...
@@ -49,7 +49,7 @@ const lexer = (input) => {
                 while (
                     (LETTERS.test(char) ||
                         NUMBERS.test(char) ||
-                        char === "_") &&
+                        char === '_') &&
                     current + 1 <= input.length
                 ) {
                     value += char;
@@ -57,24 +57,25 @@ const lexer = (input) => {
                 }
 
                 // whitespace does not ++ value so i do it here
-                if (char === " ") {
+                if (char === ' ') {
                     char = input[++current];
                 }
 
                 // when variable or func name
                 if (
-                    (char === "(" ||
-                        char === ")" ||
-                        char === ";" ||
-                        char === "=" ||
-                        char === "^" ||
-                        char === "*" ||
-                        char === "/" ||
-                        char === "!" ||
-                        char === "?" ||
-                        char === ":" ||
-                        char === ",") &&
-                    value !== "return"
+                    (char === '(' ||
+                        char === ')' ||
+                        char === ';' ||
+                        char === '=' ||
+                        char === '^' ||
+                        char === '*' ||
+                        char === '/' ||
+                        char === '!' ||
+                        char === '?' ||
+                        char === ':' ||
+                        char === '+' ||
+                        char === ',') &&
+                    value !== 'return'
                 ) {
                     reservedWord = false;
                 }
@@ -83,21 +84,21 @@ const lexer = (input) => {
             // check for standard words of c language
             if (reservedWord === true) {
                 switch (value) {
-                    case "return":
+                    case 'return':
                         tokens.push({
-                            type: "RETURN",
+                            type: 'RETURN',
                             value: value,
                         });
                         break;
-                    case "int":
+                    case 'int':
                         tokens.push({
-                            type: "TYPE",
+                            type: 'TYPE',
                             value: value,
                         });
                         break;
-                    case "float":
+                    case 'float':
                         tokens.push({
-                            type: "TYPE",
+                            type: 'TYPE',
                             value: value,
                         });
                         break;
@@ -106,7 +107,7 @@ const lexer = (input) => {
                 }
             } else {
                 tokens.push({
-                    type: "WORD",
+                    type: 'WORD',
                     value: value,
                 });
             }
@@ -115,9 +116,9 @@ const lexer = (input) => {
         }
 
         // return parenthesis token
-        if (char === "(" || char === ")") {
+        if (char === '(' || char === ')') {
             tokens.push({
-                type: "PARENTHESIS",
+                type: 'PARENTHESIS',
                 value: char,
             });
 
@@ -126,9 +127,9 @@ const lexer = (input) => {
         }
 
         // return curly token
-        if (char === "{" || char === "}") {
+        if (char === '{' || char === '}') {
             tokens.push({
-                type: "CURLY",
+                type: 'CURLY',
                 value: char,
             });
 
@@ -137,9 +138,9 @@ const lexer = (input) => {
         }
 
         // hex number token
-        if (char === "0" && input[++current] === "x") {
+        if (char === '0' && input[++current] === 'x') {
             char = input[++current];
-            var value = "0x";
+            var value = '0x';
 
             while (NUMBERS.test(char) || LETTERS.test(char)) {
                 value += char;
@@ -147,7 +148,7 @@ const lexer = (input) => {
             }
 
             tokens.push({
-                type: "HEX_NUMBER",
+                type: 'HEX_NUMBER',
                 value: value,
             });
 
@@ -156,20 +157,20 @@ const lexer = (input) => {
 
         // return number token
         if (NUMBERS.test(char)) {
-            var value = "";
+            var value = '';
             //char = input[current];
 
             // need while if in number more than one digit
             while (NUMBERS.test(char)) {
                 value += char;
-                if (value[0] === "0") {
+                if (value[0] === '0') {
                     char = input[--current];
                 }
                 char = input[++current];
             }
 
             tokens.push({
-                type: "NUMBER",
+                type: 'NUMBER',
                 value: value,
             });
 
@@ -177,10 +178,10 @@ const lexer = (input) => {
         }
 
         // return semicolon token
-        if (char === ";") {
+        if (char === ';') {
             tokens.push({
-                type: "SEMICOLON",
-                value: ";",
+                type: 'SEMICOLON',
+                value: ';',
             });
 
             current++;
@@ -188,10 +189,10 @@ const lexer = (input) => {
         }
 
         // return logical not token
-        if (char === "!") {
+        if (char === '!') {
             tokens.push({
-                type: "LOGICAL_NEGATION",
-                value: "!",
+                type: 'LOGICAL_NEGATION',
+                value: '!',
             });
 
             current++;
@@ -199,10 +200,10 @@ const lexer = (input) => {
         }
 
         // mul token
-        if (char === "*") {
+        if (char === '*') {
             tokens.push({
-                type: "MUL_OPERATION",
-                value: "*",
+                type: 'MUL_OPERATION',
+                value: '*',
             });
 
             current++;
@@ -210,10 +211,10 @@ const lexer = (input) => {
         }
 
         // XOR token
-        if (char === "^") {
+        if (char === '^') {
             tokens.push({
-                type: "XOR_OPERATION",
-                value: "^",
+                type: 'XOR_OPERATION',
+                value: '^',
             });
 
             current++;
@@ -221,10 +222,10 @@ const lexer = (input) => {
         }
 
         // division token
-        if (char === "/") {
+        if (char === '/') {
             tokens.push({
-                type: "DIV_OPERATION",
-                value: "/",
+                type: 'DIV_OPERATION',
+                value: '/',
             });
 
             current++;
@@ -232,10 +233,10 @@ const lexer = (input) => {
         }
 
         // assign token
-        if (char === "=") {
+        if (char === '=') {
             tokens.push({
-                type: "ASSIGN",
-                value: "=",
+                type: 'ASSIGN',
+                value: '=',
             });
 
             current++;
@@ -243,10 +244,10 @@ const lexer = (input) => {
         }
 
         // colon token
-        if (char === ":") {
+        if (char === ':') {
             tokens.push({
-                type: "COLON",
-                value: ":",
+                type: 'COLON',
+                value: ':',
             });
 
             current++;
@@ -254,10 +255,10 @@ const lexer = (input) => {
         }
 
         // ternary token
-        if (char === "?") {
+        if (char === '?') {
             tokens.push({
-                type: "TERNARY_OPERATOR",
-                value: "?",
+                type: 'TERNARY_OPERATOR',
+                value: '?',
             });
 
             current++;
@@ -265,10 +266,21 @@ const lexer = (input) => {
         }
 
         // coma token
-        if (char === ",") {
+        if (char === ',') {
             tokens.push({
-                type: "COMA",
-                value: ",",
+                type: 'COMA',
+                value: ',',
+            });
+
+            current++;
+            continue;
+        }
+
+        // plus token
+        if (char === '+') {
+            tokens.push({
+                type: 'PLUS_OPERATION',
+                value: '+',
             });
 
             current++;
@@ -276,7 +288,7 @@ const lexer = (input) => {
         }
 
         // throw err when we do not know char
-        throw new TypeError("Type Error! Unrecognized Character: " + char);
+        throw new TypeError('Type Error! Unrecognized Character: ' + char);
     }
 
     return tokens;

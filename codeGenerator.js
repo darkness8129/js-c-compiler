@@ -155,6 +155,38 @@ const generateExprAsmCode = (expressions) => {
         }
     }
 
+    // SUM
+    for (let i = 0; i < expressions.length; i++) {
+        if (expressions[i] === '+') {
+            if (expressions[i - 1] === 'eax' && expressions[i + 1] === 'eax') {
+                asmCode.push(`pop ebx`);
+                asmCode.push(`pop eax`);
+                asmCode.push(`invoke sum, eax, ebx`);
+            } else if (
+                expressions[i - 1] === 'eax' ||
+                expressions[i + 1] === 'eax'
+            ) {
+                asmCode.push(`pop eax`);
+                asmCode.push(
+                    `invoke sum, ${expressions[i - 1]}, ${expressions[i + 1]}`
+                );
+            } else {
+                asmCode.push(
+                    `invoke sum, ${expressions[i - 1]}, ${expressions[i + 1]}`
+                );
+            }
+
+            asmCode.push(`push eax`);
+
+            // num operation num replace on eax
+            expressions.splice(i - 1, 3, 'eax');
+
+            // recursion
+            asmCode.push(...generateExprAsmCode(expressions));
+            break;
+        }
+    }
+
     // XOR
     for (let i = 0; i < expressions.length; i++) {
         if (expressions[i] === '^') {
@@ -515,6 +547,13 @@ divide proc num1:DWORD, num2:DWORD
   ret
 divide endp`;
 
+    const sum = `
+sum proc num1:DWORD, num2:DWORD
+  mov eax, num1
+  add eax, num2
+  ret
+sum endp`;
+
     const xorOperation = `
 xorOperation proc num1:DWORD, num2:DWORD
   mov eax, num1
@@ -546,6 +585,7 @@ start:
     exit
 ${multiply} 
 ${divide}
+${sum}
 ${xorOperation}
 ${negation}
 ${asmFuncs.join('\n')}
@@ -558,7 +598,7 @@ end start`;
 
     // write all asm code in file with separating by \n
     fs.writeFile(
-        './5-27-JavaScript-ІВ-81-Юхимчук.asm',
+        './6-27-JavaScript-ІВ-81-Юхимчук.asm',
         asmCode.join('\n'),
         (err) => {
             if (err) throw err;

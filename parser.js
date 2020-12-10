@@ -246,7 +246,6 @@ const parser = (tokens) => {
                 token.type !== 'SEMICOLON' ||
                 (token.type === 'SEMICOLON' && token.value !== ';')
             ) {
-                //when in return returned value not number and not hex number, and not operation
                 if (
                     token.type !== 'NUMBER' &&
                     token.type !== 'HEX_NUMBER' &&
@@ -255,11 +254,10 @@ const parser = (tokens) => {
                     token.type !== 'LOGICAL_NEGATION' &&
                     token.type !== 'PARENTHESIS' &&
                     token.type !== 'WORD' &&
-                    token.type !== 'MUL_OPERATION'
+                    token.type !== 'MUL_OPERATION' &&
+                    token.type !== 'PLUS_OPERATION'
                 ) {
-                    throw new Error(
-                        `Error: Return value should be number. Line: ${line}`
-                    );
+                    throw new Error(`Error: Wrong return value. Line: ${line}`);
                 }
                 // can not assign in return
                 else if (token.type === 'ASSIGN') {
@@ -639,6 +637,7 @@ const parser = (tokens) => {
                 value: token.value,
             };
         }
+
         // ternary node
         if (token.type === 'TERNARY_OPERATOR') {
             current++;
@@ -647,11 +646,21 @@ const parser = (tokens) => {
                 value: token.value,
             };
         }
+
         // colon node
         if (token.type === 'COLON') {
             current++;
             return {
                 id: 'colon',
+                value: token.value,
+            };
+        }
+
+        // plus node
+        if (token.type === 'PLUS_OPERATION') {
+            current++;
+            return {
+                id: 'PlusOperation',
                 value: token.value,
             };
         }
