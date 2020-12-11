@@ -3,11 +3,12 @@ const parser = (tokens) => {
     var current = 0;
     let line = 1;
     let funcIndex = -1;
+    let forIndex = -1;
     // types
     let typeOfFunc, typeOfReturn;
 
     //func for checking errors with variables
-    const checkErrWithVar = (exp) => {
+    const checkErrWithVar = (exp, environment) => {
         const LETTERS = /[a-zA-Z]/;
         for (let i = 0; i < exp.length; i++) {
             if (
@@ -15,53 +16,68 @@ const parser = (tokens) => {
                 exp[i][0] !== '0' &&
                 exp[i][1] !== 'x'
             ) {
-                let flag1 = false;
-                let body = ast.body[funcIndex].body;
-                let params = ast.body[funcIndex].params;
-                for (let j = 0; j < body.length; j++) {
-                    if (
-                        body[j].id === 'expressionWithType' ||
-                        body[j].id === 'declaration' ||
-                        (body[j].id === 'ternaryExpression' && body[j].type)
-                    ) {
-                        if (body[j].variable === exp[i]) {
-                            flag1 = true;
+                let isDeclared = false;
+                let isInitialized = false;
+
+                const check = (body) => {
+                    for (let j = 0; j < body.length; j++) {
+                        if (
+                            body[j].id === 'expressionWithType' ||
+                            body[j].id === 'declaration' ||
+                            (body[j].id === 'ternaryExpression' && body[j].type)
+                        ) {
+                            if (body[j].variable === exp[i]) {
+                                isDeclared = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    for (let j = 0; j < body.length; j++) {
+                        if (
+                            body[j].id === 'expressionWithoutType' ||
+                            body[j].id === 'expressionWithType' ||
+                            body[j].id === 'ternaryExpression'
+                        ) {
+                            if (body[j].variable === exp[i]) {
+                                isInitialized = true;
+                                break;
+                            }
+                        }
+                    }
+                };
+
+                if (environment === 'func') {
+                    let body = ast.body[funcIndex].body;
+                    let params = ast.body[funcIndex].params;
+                    check(body);
+                    for (let j = 0; j < params.length; j++) {
+                        if (params[j].variable === exp[i]) {
+                            isDeclared = true;
+                            isInitialized = true;
                             break;
                         }
                     }
-                }
-
-                let flag2 = false;
-                for (let j = 0; j < body.length; j++) {
-                    if (
-                        body[j].id === 'expressionWithoutType' ||
-                        body[j].id === 'expressionWithType' ||
-                        body[j].id === 'ternaryExpression'
-                    ) {
-                        if (body[j].variable === exp[i]) {
-                            flag2 = true;
-                            break;
-                        }
-                    }
-                }
-
-                for (let j = 0; j < params.length; j++) {
-                    if (params[j].variable === exp[i]) {
-                        flag1 = true;
-                        flag2 = true;
-                        break;
-                    }
+                } else if (environment === 'forNode') {
+                    let body = ast.body[funcIndex].body;
+                    let forNodeBody = body.filter((elem) => {
+                        return elem.id === 'ForCycle';
+                    })[forIndex].body;
+                    // check in for body
+                    check(forNodeBody);
+                    // check in func body
+                    check(body);
                 }
 
                 // when do not declared
-                if (!flag1) {
+                if (!isDeclared) {
                     throw new Error(
                         `Error: Variable ${exp[i]} is not declared. Line: ${line}`
                     );
                 }
 
                 // when do not initialized
-                if (!flag2) {
+                if (!isInitialized) {
                     throw new Error(
                         `Error: Variable ${exp[i]} is not initialized. Line: ${line}`
                     );
@@ -102,7 +118,7 @@ const parser = (tokens) => {
         };
     };
 
-    const walk = () => {
+    const walk = (environment = 'func') => {
         // current token
         var token = tokens[current];
 
@@ -173,13 +189,13 @@ const parser = (tokens) => {
                     };
                 }
 
-                let flag = ast.body.some((elem) => {
+                let isAlreadyDefined = ast.body.some((elem) => {
                     if (elem.id === 'functionDefinition') {
                         return elem.name === node.name;
                     }
                 });
 
-                if (flag) {
+                if (isAlreadyDefined) {
                     throw new Error(
                         `Error! Function ${node.name} is already defined. Line:${line}`
                     );
@@ -292,7 +308,7 @@ const parser = (tokens) => {
                 const exp = node.body.map((elem) => {
                     return elem.value;
                 });
-                checkErrWithVar(exp);
+                checkErrWithVar(exp, environment);
             }
 
             current++;
@@ -422,7 +438,7 @@ const parser = (tokens) => {
             const exp = node.expression.map((elem) => {
                 return elem.value;
             });
-            checkErrWithVar(exp);
+            checkErrWithVar(exp, environment);
 
             // when variable before = not declared
             let flag = ast.body[funcIndex].body.some((elem) => {
@@ -548,17 +564,34 @@ const parser = (tokens) => {
             };
 
             // when var already declared
-            let flag = ast.body[funcIndex].body.some((elem) => {
-                if (
-                    (elem.id === 'expressionWithType' ||
-                        elem.id === 'declaration') &&
-                    elem.variable === node.variable
-                ) {
-                    return true;
-                }
-            });
+            let isAlreadyDeclared = false;
+            if (environment === 'func') {
+                isAlreadyDeclared = ast.body[funcIndex].body.some((elem) => {
+                    if (
+                        (elem.id === 'expressionWithType' ||
+                            elem.id === 'declaration') &&
+                        elem.variable === node.variable
+                    ) {
+                        return true;
+                    }
+                });
+            } else if (environment === 'forNode') {
+                let body = ast.body[funcIndex].body;
+                let forNodeBody = body.filter((elem) => {
+                    return elem.id === 'ForCycle';
+                })[forIndex].body;
 
-            if (flag) {
+                isAlreadyDeclared = forNodeBody.some((elem) => {
+                    if (
+                        (elem.id === 'expressionWithType' ||
+                            elem.id === 'declaration') &&
+                        elem.variable === node.variable
+                    ) {
+                        return true;
+                    }
+                });
+            }
+            if (isAlreadyDeclared) {
                 throw new Error(
                     `Error: Variable ${node.variable} is already declared. Line: ${line}`
                 );
@@ -586,8 +619,11 @@ const parser = (tokens) => {
                 return elem.value;
             });
 
-            if (node.expression[1].id !== 'functionCall') {
-                checkErrWithVar(exp);
+            if (
+                node.expression.length > 0 &&
+                node.expression[1].id !== 'functionCall'
+            ) {
+                checkErrWithVar(exp, environment);
             }
 
             if (node.expression.length === 0) {
@@ -661,6 +697,99 @@ const parser = (tokens) => {
             current++;
             return {
                 id: 'PlusOperation',
+                value: token.value,
+            };
+        }
+
+        if (token.type === 'FOR_CYCLE') {
+            forIndex++;
+            // skip for
+            token = tokens[++current];
+
+            if (token.type === 'PARENTHESIS' && token.value === '(') {
+                token = tokens[++current];
+
+                var node = {
+                    id: 'ForCycle',
+                    initialization: [],
+                    condition: [],
+                    reinitialization: [],
+                    body: [],
+                };
+
+                let index = 0;
+                while (
+                    token.type !== 'PARENTHESIS' ||
+                    (token.type === 'PARENTHESIS' && token.value !== ')')
+                ) {
+                    if (token.type === 'SEMICOLON') {
+                        current++;
+                        index++;
+                        token = tokens[current];
+                    } else {
+                        switch (index) {
+                            case 0:
+                                node.initialization.push(walk());
+                                //FIX IT
+                                // because skip ; in exprWith/WithoutType
+                                index++;
+                                break;
+                            case 1:
+                                node.condition.push(walk());
+                                break;
+                            case 2:
+                                node.reinitialization.push(walk());
+                                break;
+                        }
+                        token = tokens[current];
+                    }
+                }
+
+                ast.body[funcIndex].body.push(node);
+
+                current++;
+                token = tokens[current];
+                if (token.value === '{') {
+                    token = tokens[++current];
+
+                    while (
+                        token.type !== 'CURLY' ||
+                        (token.type === 'CURLY' && token.value !== '}')
+                    ) {
+                        // for check if node === null
+                        let funcVal = walk('forNode');
+                        if (funcVal) {
+                            let body = ast.body[funcIndex].body;
+                            let forNodeBody = body.filter((elem) => {
+                                return elem.id === 'ForCycle';
+                            })[forIndex].body;
+                            forNodeBody.push(funcVal);
+                        }
+
+                        token = tokens[current];
+                    }
+
+                    current++;
+                }
+            }
+
+            return;
+        }
+
+        // break node
+        if (token.type === 'BREAK') {
+            current++;
+            return {
+                id: 'BreakOperator',
+                value: token.value,
+            };
+        }
+
+        // continue node
+        if (token.type === 'CONTINUE') {
+            current++;
+            return {
+                id: 'ContinueOperator',
                 value: token.value,
             };
         }

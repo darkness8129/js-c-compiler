@@ -65,11 +65,11 @@ negation proc num1: DWORD
 negation endp
 
 main proc 
-    
-    invoke multiply, 3, 8
+    local f:DWORD
+    mov eax, 1
 	push eax
-	pop eax
-	invoke sum, 4, eax
+	pop f
+	mov eax, 1
 	push eax
     pop eax
     

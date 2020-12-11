@@ -75,7 +75,10 @@ const lexer = (input) => {
                         char === ':' ||
                         char === '+' ||
                         char === ',') &&
-                    value !== 'return'
+                    value !== 'return' &&
+                    value !== 'for' &&
+                    value !== 'break' &&
+                    value !== 'continue'
                 ) {
                     reservedWord = false;
                 }
@@ -99,6 +102,24 @@ const lexer = (input) => {
                     case 'float':
                         tokens.push({
                             type: 'TYPE',
+                            value: value,
+                        });
+                        break;
+                    case 'for':
+                        tokens.push({
+                            type: 'FOR_CYCLE',
+                            value: value,
+                        });
+                        break;
+                    case 'break':
+                        tokens.push({
+                            type: 'BREAK',
+                            value: value,
+                        });
+                        break;
+                    case 'continue':
+                        tokens.push({
+                            type: 'CONTINUE',
                             value: value,
                         });
                         break;
