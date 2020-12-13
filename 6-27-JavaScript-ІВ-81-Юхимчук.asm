@@ -65,10 +65,13 @@ negation proc num1: DWORD
 negation endp
 
 main proc 
-    local f:DWORD
+    local b:DWORD
     mov eax, 1
 	push eax
-	pop f
+	pop b
+	mov eax, 3
+	push eax
+	pop b
 	mov eax, 1
 	push eax
     pop eax

@@ -47,7 +47,10 @@ const parser = (tokens) => {
                     }
                 };
 
-                if (environment === 'func') {
+                if (
+                    environment === 'func' ||
+                    environment === 'forNodeInitialization'
+                ) {
                     let body = ast.body[funcIndex].body;
                     let params = ast.body[funcIndex].params;
                     check(body);
@@ -58,7 +61,7 @@ const parser = (tokens) => {
                             break;
                         }
                     }
-                } else if (environment === 'forNode') {
+                } else if (environment === 'forNodeBody') {
                     let body = ast.body[funcIndex].body;
                     let forNodeBody = body.filter((elem) => {
                         return elem.id === 'ForCycle';
@@ -67,10 +70,19 @@ const parser = (tokens) => {
                     check(forNodeBody);
                     // check in func body
                     check(body);
+                } else if (
+                    environment === 'forNodeCondition' ||
+                    environment === 'forNodeReinitialization'
+                ) {
+                    let body = ast.body[funcIndex].body;
+                    let forNodeInitialization = body.filter((elem) => {
+                        return elem.id === 'ForCycle';
+                    })[forIndex].initialization;
+                    check(forNodeInitialization);
+                    check(body);
                 }
-
-                // when do not declared
                 if (!isDeclared) {
+                    // when do not declared
                     throw new Error(
                         `Error: Variable ${exp[i]} is not declared. Line: ${line}`
                     );
@@ -429,10 +441,16 @@ const parser = (tokens) => {
                 token.type !== 'SEMICOLON' ||
                 (token.type === 'SEMICOLON' && token.value !== ';')
             ) {
+                // need this in for cycle
+                if (token.value === ')' && tokens[current + 1].value === '{') {
+                    break;
+                }
+
                 node.expression.push(walk());
                 token = tokens[current];
             }
-            current++;
+            // need this in for cycle
+            if (token.value !== ')') current++;
 
             // when using not declared or not initialized variable
             const exp = node.expression.map((elem) => {
@@ -449,6 +467,22 @@ const parser = (tokens) => {
                     return elem.variable === node.variable;
                 }
             });
+
+            if (environment === 'forNodeReinitialization') {
+                let body = ast.body[funcIndex].body;
+                let forNodeInit = body.filter((elem) => {
+                    return elem.id === 'ForCycle';
+                })[forIndex].initialization;
+
+                flag = forNodeInit.some((elem) => {
+                    if (
+                        elem.id === 'declaration' ||
+                        elem.id === 'expressionWithType'
+                    ) {
+                        return elem.variable === node.variable;
+                    }
+                });
+            }
 
             if (!flag) {
                 throw new Error(
@@ -575,7 +609,7 @@ const parser = (tokens) => {
                         return true;
                     }
                 });
-            } else if (environment === 'forNode') {
+            } else if (environment === 'forNodeBody') {
                 let body = ast.body[funcIndex].body;
                 let forNodeBody = body.filter((elem) => {
                     return elem.id === 'ForCycle';
@@ -716,6 +750,7 @@ const parser = (tokens) => {
                     reinitialization: [],
                     body: [],
                 };
+                ast.body[funcIndex].body.push(node);
 
                 let index = 0;
                 while (
@@ -729,23 +764,75 @@ const parser = (tokens) => {
                     } else {
                         switch (index) {
                             case 0:
-                                node.initialization.push(walk());
-                                //FIX IT
-                                // because skip ; in exprWith/WithoutType
-                                index++;
+                                node.initialization.push(
+                                    walk('forNodeInitialization')
+                                );
+                                if (
+                                    node.initialization[0].id ===
+                                        'expressionWithType' ||
+                                    node.initialization[0].id ===
+                                        'expressionWithoutType'
+                                ) {
+                                    // because skip ; in exprWith/WithoutType
+                                    index++;
+                                } else {
+                                    throw new Error(
+                                        `Error! Wrong part of initialization in the loop. Line:${line}`
+                                    );
+                                }
                                 break;
                             case 1:
-                                node.condition.push(walk());
+                                let funcVal1 = walk();
+
+                                if (funcVal1) {
+                                    let body = ast.body[funcIndex].body;
+                                    let forNodeCond = body.filter((elem) => {
+                                        return elem.id === 'ForCycle';
+                                    })[forIndex].condition;
+                                    forNodeCond.push(funcVal1);
+                                }
+
+                                const exp = node.condition.map((elem) => {
+                                    return elem.value;
+                                });
+                                checkErrWithVar(exp, 'forNodeCondition');
+
                                 break;
                             case 2:
-                                node.reinitialization.push(walk());
+                                // for check if node === null
+                                let funcVal2 = walk('forNodeReinitialization');
+                                if (funcVal2) {
+                                    let body = ast.body[funcIndex].body;
+                                    let forNodeReinit = body.filter((elem) => {
+                                        return elem.id === 'ForCycle';
+                                    })[forIndex].reinitialization;
+                                    forNodeReinit.push(funcVal2);
+                                }
+
+                                if (
+                                    node.reinitialization[0].id !==
+                                    'expressionWithoutType'
+                                ) {
+                                    throw new Error(
+                                        `Error! Wrong part of reinitialization in the loop. Line:${line}`
+                                    );
+                                }
+
+                                const exp2 = node.reinitialization[0].expression.map(
+                                    (elem) => {
+                                        return elem.value;
+                                    }
+                                );
+                                checkErrWithVar(
+                                    exp2,
+                                    'forNodeReinitialization'
+                                );
+
                                 break;
                         }
                         token = tokens[current];
                     }
                 }
-
-                ast.body[funcIndex].body.push(node);
 
                 current++;
                 token = tokens[current];
@@ -757,7 +844,7 @@ const parser = (tokens) => {
                         (token.type === 'CURLY' && token.value !== '}')
                     ) {
                         // for check if node === null
-                        let funcVal = walk('forNode');
+                        let funcVal = walk('forNodeBody');
                         if (funcVal) {
                             let body = ast.body[funcIndex].body;
                             let forNodeBody = body.filter((elem) => {
@@ -778,7 +865,12 @@ const parser = (tokens) => {
 
         // break node
         if (token.type === 'BREAK') {
-            current++;
+            current += 2;
+            if (environment !== 'forNodeBody') {
+                throw new Error(
+                    `Error! The break operator is outside the loop. Line:${line}`
+                );
+            }
             return {
                 id: 'BreakOperator',
                 value: token.value,
@@ -787,7 +879,12 @@ const parser = (tokens) => {
 
         // continue node
         if (token.type === 'CONTINUE') {
-            current++;
+            current += 2;
+            if (environment !== 'forNodeBody') {
+                throw new Error(
+                    `Error! The continue operator is outside the loop. Line:${line}`
+                );
+            }
             return {
                 id: 'ContinueOperator',
                 value: token.value,
