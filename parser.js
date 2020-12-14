@@ -257,6 +257,7 @@ const parser = (tokens) => {
 
             current++;
             line++;
+            forIndex = -1;
 
             return node;
         }
@@ -458,23 +459,9 @@ const parser = (tokens) => {
             });
             checkErrWithVar(exp, environment);
 
-            // when variable before = not declared
-            let flag = ast.body[funcIndex].body.some((elem) => {
-                if (
-                    elem.id === 'declaration' ||
-                    elem.id === 'expressionWithType'
-                ) {
-                    return elem.variable === node.variable;
-                }
-            });
-
-            if (environment === 'forNodeReinitialization') {
-                let body = ast.body[funcIndex].body;
-                let forNodeInit = body.filter((elem) => {
-                    return elem.id === 'ForCycle';
-                })[forIndex].initialization;
-
-                flag = forNodeInit.some((elem) => {
+            let isDeclared = false;
+            let check = (body) => {
+                let flag = body.some((elem) => {
                     if (
                         elem.id === 'declaration' ||
                         elem.id === 'expressionWithType'
@@ -482,9 +469,34 @@ const parser = (tokens) => {
                         return elem.variable === node.variable;
                     }
                 });
+
+                if (flag) isDeclared = true;
+            };
+            // when variable before = not declared
+            if (environment === 'forNodeBody') {
+                let body = ast.body[funcIndex].body;
+                let forNodeBody = body.filter((elem) => {
+                    return elem.id === 'ForCycle';
+                })[forIndex].body;
+                check(forNodeBody);
+                check(body);
             }
 
-            if (!flag) {
+            if (environment === 'forNodeReinitialization') {
+                let body = ast.body[funcIndex].body;
+                let forNodeInit = body.filter((elem) => {
+                    return elem.id === 'ForCycle';
+                })[forIndex].initialization;
+                check(forNodeInit);
+                check(body);
+            }
+
+            if (environment === 'func') {
+                let body = ast.body[funcIndex].body;
+                check(body);
+            }
+
+            if (!isDeclared) {
                 throw new Error(
                     `Error: Variable ${node.variable} is not declared. Line: ${line}`
                 );

@@ -319,6 +319,8 @@ const generateAsmCodeFromFuncBody = (funcBody) => {
                 generatedReturn.push(...generateExprAsmCode(expression));
                 generatedAsm.push(...generatedReturn);
             }
+        } else if (funcBody[i].id === 'ForCycle') {
+            generatedAsm.push(...generateAsmCodeFromFuncBody(funcBody[i].body));
         }
     }
 
@@ -355,25 +357,20 @@ const getVariables = (funcBody) => {
                 isInitialized: true,
             });
         } else if (elem.id === 'ternaryExpression') {
-            const isVariable = variables.some((variable) => {
-                return variable.variable === elem.variable;
+            variables.push({
+                variable: elem.variable,
+                type: elem.type,
             });
-            if (!isVariable) {
-                variables.push({ variable: elem.variable, type: elem.type });
-            }
         } else if (elem.id === 'expressionWithoutType') {
-            const isVariable = variables.some((variable) => {
-                return variable.variable === elem.variable;
+            variables.map((variable) => {
+                if (variable.variable === elem.variable) {
+                    variable.isInitialized = true;
+                }
             });
-            if (isVariable) {
-                variables.map((variable) => {
-                    if (variable.variable === elem.variable) {
-                        variable.isInitialized = true;
-                    }
-                });
-            } else {
-                throw new Error(`Variable ${elem.variable} is not declared!`);
-            }
+        } else if (elem.id === 'ForCycle') {
+            variables.push(...getVariables(elem.body));
+            variables.push(...getVariables(elem.initialization));
+            variables.push(...getVariables([elem.condition]));
         }
     });
 
@@ -490,13 +487,131 @@ ${asmFuncBodies[i].func} endp`;
     return asmCodeFuncs;
 };
 
+const renameVarsInLoop = (funcs) => {
+    let forId = 1;
+    for (let i = 0; i < funcs.length; i++) {
+        funcs[i].body.map((elem) => {
+            if (elem.id === 'ForCycle') {
+                let init = elem.initialization;
+                let reinit = elem.reinitialization;
+                init.map((el) => {
+                    if (el.id === 'expressionWithType') {
+                        el.variable += `For${forId}`;
+                    }
+
+                    return el;
+                });
+
+                // here only if in init with/without
+                elem.condition.map((e) => {
+                    if (
+                        e.id === 'word' &&
+                        e.value + `For${forId}` ===
+                            elem.initialization[0].variable
+                    ) {
+                        e.value += `For${forId}`;
+                    }
+                    return e;
+                });
+
+                elem.condition = {
+                    id: 'expressionWithType',
+                    variable: `conditionFor${forId}`,
+                    expression: [...elem.condition],
+                };
+
+                // here if we only do without with declared var in init
+                reinit.map((e) => {
+                    if (
+                        e.variable + `For${forId}` ===
+                        elem.initialization[0].variable
+                    ) {
+                        e.variable += `For${forId}`;
+                    }
+
+                    e.expression.map((element) => {
+                        if (
+                            element.id === 'word' &&
+                            element.value + `For${forId}` ===
+                                elem.initialization[0].variable
+                        ) {
+                            element.value += `For${forId}`;
+                        }
+                        return e;
+                    });
+                    return e;
+                });
+
+                elem.body.map((el) => {
+                    if (el.id === 'expressionWithType') {
+                        el.variable += `For${forId}`;
+                        el.expression.map((e) => {
+                            if (e.id === 'word') {
+                                let isVar = elem.body.some((node) => {
+                                    if (node.id === 'expressionWithType') {
+                                        return (
+                                            node.variable ===
+                                            e.value + `For${forId}`
+                                        );
+                                    }
+                                });
+                                if (isVar) {
+                                    e.value += `For${forId}`;
+                                }
+                            }
+                            return e;
+                        });
+                    } else if (el.id === 'expressionWithoutType') {
+                        let isVar = elem.body.some((node) => {
+                            if (node.id === 'expressionWithType') {
+                                return (
+                                    node.variable ===
+                                    el.variable + `For${forId}`
+                                );
+                            }
+                        });
+
+                        if (isVar) {
+                            el.variable += `For${forId}`;
+                        }
+
+                        el.expression.map((e) => {
+                            if (e.id === 'word') {
+                                let isVar = elem.body.some((node) => {
+                                    if (node.id === 'expressionWithType') {
+                                        return (
+                                            node.variable ===
+                                            e.value + `For${forId}`
+                                        );
+                                    }
+                                });
+                                if (isVar) {
+                                    e.value += `For${forId}`;
+                                }
+                            }
+                            return e;
+                        });
+                    }
+                    return el;
+                });
+
+                forId++;
+            }
+        });
+        forId = 1;
+    }
+    return funcs;
+};
+
 // main func for generating
 const codeGenerator = (ast) => {
     //all asm code
     const asmCode = [];
     // func body
-    const funcs = getFuncs(ast);
+    let funcs = getFuncs(ast);
     //console.log(JSON.stringify(funcs, null, 2));
+    funcs = renameVarsInLoop(funcs);
+    console.log(JSON.stringify(funcs, null, 2));
     // variables
     const variables = getVarsForEachFunc(funcs);
     //console.log(JSON.stringify(variables, null, 2));

@@ -65,13 +65,19 @@ negation proc num1: DWORD
 negation endp
 
 main proc 
-    local b:DWORD
+    local a:DWORD
+	local bFor1:DWORD
+	local iFor1:DWORD
+	local conditionFor1:DWORD
     mov eax, 1
 	push eax
-	pop b
-	mov eax, 3
+	pop a
+	mov eax, 1
 	push eax
-	pop b
+	pop bFor1
+	invoke sum, bFor1, 1
+	push eax
+	pop bFor1
 	mov eax, 1
 	push eax
     pop eax
