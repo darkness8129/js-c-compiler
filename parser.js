@@ -18,6 +18,7 @@ const parser = (tokens) => {
             ) {
                 let isDeclared = false;
                 let isInitialized = false;
+                let body = ast.body[funcIndex].body;
 
                 const check = (body) => {
                     for (let j = 0; j < body.length; j++) {
@@ -51,7 +52,6 @@ const parser = (tokens) => {
                     environment === 'func' ||
                     environment === 'forNodeInitialization'
                 ) {
-                    let body = ast.body[funcIndex].body;
                     let params = ast.body[funcIndex].params;
                     check(body);
                     for (let j = 0; j < params.length; j++) {
@@ -62,25 +62,26 @@ const parser = (tokens) => {
                         }
                     }
                 } else if (environment === 'forNodeBody') {
-                    let body = ast.body[funcIndex].body;
                     let forNodeBody = body.filter((elem) => {
                         return elem.id === 'ForCycle';
                     })[forIndex].body;
-                    // check in for body
+                    let forNodeInitialization = body.filter((elem) => {
+                        return elem.id === 'ForCycle';
+                    })[forIndex].initialization;
                     check(forNodeBody);
-                    // check in func body
                     check(body);
+                    check(forNodeInitialization);
                 } else if (
                     environment === 'forNodeCondition' ||
                     environment === 'forNodeReinitialization'
                 ) {
-                    let body = ast.body[funcIndex].body;
                     let forNodeInitialization = body.filter((elem) => {
                         return elem.id === 'ForCycle';
                     })[forIndex].initialization;
                     check(forNodeInitialization);
                     check(body);
                 }
+
                 if (!isDeclared) {
                     // when do not declared
                     throw new Error(
@@ -460,6 +461,8 @@ const parser = (tokens) => {
             checkErrWithVar(exp, environment);
 
             let isDeclared = false;
+            let body = ast.body[funcIndex].body;
+
             let check = (body) => {
                 let flag = body.some((elem) => {
                     if (
@@ -472,27 +475,25 @@ const parser = (tokens) => {
 
                 if (flag) isDeclared = true;
             };
+
             // when variable before = not declared
             if (environment === 'forNodeBody') {
-                let body = ast.body[funcIndex].body;
                 let forNodeBody = body.filter((elem) => {
                     return elem.id === 'ForCycle';
                 })[forIndex].body;
+                let forNodeInit = body.filter((elem) => {
+                    return elem.id === 'ForCycle';
+                })[forIndex].initialization;
+                check(forNodeInit);
                 check(forNodeBody);
                 check(body);
-            }
-
-            if (environment === 'forNodeReinitialization') {
-                let body = ast.body[funcIndex].body;
+            } else if (environment === 'forNodeReinitialization') {
                 let forNodeInit = body.filter((elem) => {
                     return elem.id === 'ForCycle';
                 })[forIndex].initialization;
                 check(forNodeInit);
                 check(body);
-            }
-
-            if (environment === 'func') {
-                let body = ast.body[funcIndex].body;
+            } else if (environment === 'func') {
                 check(body);
             }
 
@@ -609,10 +610,11 @@ const parser = (tokens) => {
                 expression: [],
             };
 
-            // when var already declared
             let isAlreadyDeclared = false;
-            if (environment === 'func') {
-                isAlreadyDeclared = ast.body[funcIndex].body.some((elem) => {
+            let body = ast.body[funcIndex].body;
+
+            let check = (body) => {
+                isAlreadyDeclared = body.some((elem) => {
                     if (
                         (elem.id === 'expressionWithType' ||
                             elem.id === 'declaration') &&
@@ -621,22 +623,18 @@ const parser = (tokens) => {
                         return true;
                     }
                 });
+            };
+
+            // when var already declared
+            if (environment === 'func') {
+                check(body);
             } else if (environment === 'forNodeBody') {
-                let body = ast.body[funcIndex].body;
                 let forNodeBody = body.filter((elem) => {
                     return elem.id === 'ForCycle';
                 })[forIndex].body;
-
-                isAlreadyDeclared = forNodeBody.some((elem) => {
-                    if (
-                        (elem.id === 'expressionWithType' ||
-                            elem.id === 'declaration') &&
-                        elem.variable === node.variable
-                    ) {
-                        return true;
-                    }
-                });
+                check(forNodeBody);
             }
+
             if (isAlreadyDeclared) {
                 throw new Error(
                     `Error: Variable ${node.variable} is already declared. Line: ${line}`

@@ -66,19 +66,30 @@ negation endp
 
 main proc 
     local a:DWORD
-	local bFor1:DWORD
 	local iFor1:DWORD
 	local conditionFor1:DWORD
     mov eax, 1
 	push eax
 	pop a
-	mov eax, 1
+	mov eax, -2
 	push eax
-	pop bFor1
-	invoke sum, bFor1, 1
+	pop iFor1
+	loopStart1:
+	mov eax, iFor1
 	push eax
-	pop bFor1
-	mov eax, 1
+	pop conditionFor1
+	cmp conditionFor1, 0
+	je loopEnd1
+	invoke sum, a, 1
+	push eax
+	pop a
+	loopContinueLabel1:
+	invoke sum, iFor1, 1
+	push eax
+	pop iFor1
+	jmp loopStart1
+	loopEnd1:
+	mov eax, a
 	push eax
     pop eax
     

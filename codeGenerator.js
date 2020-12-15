@@ -232,6 +232,7 @@ const generateAsmCodeFromFuncBody = (funcBody) => {
     const generatedAsm = [];
     // to get unique name of true, false, continue
     let uniqueNumber = 1;
+    let uniqForId = 1;
 
     // generate invoke construction
     const generateInvoke = (funcInvoke) => {
@@ -320,7 +321,34 @@ const generateAsmCodeFromFuncBody = (funcBody) => {
                 generatedAsm.push(...generatedReturn);
             }
         } else if (funcBody[i].id === 'ForCycle') {
+            // calculate init
+            generatedAsm.push(
+                ...generateAsmCodeFromFuncBody(funcBody[i].initialization)
+            );
+
+            generatedAsm.push(`loopStart${uniqForId}:`);
+            // calculate cond
+            generatedAsm.push(
+                ...generateAsmCodeFromFuncBody([funcBody[i].condition])
+            );
+            generatedAsm.push(`cmp conditionFor${uniqForId}, 0`);
+            generatedAsm.push(`je loopEnd${uniqForId}`);
+
+            // do loop body
             generatedAsm.push(...generateAsmCodeFromFuncBody(funcBody[i].body));
+
+            generatedAsm.push(`loopContinueLabel${uniqForId}:`);
+            // calculate post-expr
+            generatedAsm.push(
+                ...generateAsmCodeFromFuncBody(funcBody[i].reinitialization)
+            );
+            generatedAsm.push(`jmp loopStart${uniqForId}`);
+            generatedAsm.push(`loopEnd${uniqForId}:`);
+            uniqForId++;
+        } else if (funcBody[i].id === 'BreakOperator') {
+            generatedAsm.push(`jmp loopEnd${uniqForId}`);
+        } else if (funcBody[i].id === 'ContinueOperator') {
+            generatedAsm.push(`jmp loopContinueLabel${uniqForId}`);
         }
     }
 
@@ -544,10 +572,19 @@ const renameVarsInLoop = (funcs) => {
 
                 elem.body.map((el) => {
                     if (el.id === 'expressionWithType') {
-                        el.variable += `For${forId}`;
+                        el.variable += `ForBody${forId}`;
                         el.expression.map((e) => {
                             if (e.id === 'word') {
-                                let isVar = elem.body.some((node) => {
+                                let flag1 = elem.body.some((node) => {
+                                    if (node.id === 'expressionWithType') {
+                                        return (
+                                            node.variable ===
+                                            e.value + `ForBody${forId}`
+                                        );
+                                    }
+                                });
+
+                                let flag2 = elem.initialization.some((node) => {
                                     if (node.id === 'expressionWithType') {
                                         return (
                                             node.variable ===
@@ -555,14 +592,29 @@ const renameVarsInLoop = (funcs) => {
                                         );
                                     }
                                 });
-                                if (isVar) {
+
+                                if (flag1) {
+                                    e.value += `ForBody${forId}`;
+                                }
+
+                                if (flag2) {
                                     e.value += `For${forId}`;
                                 }
                             }
                             return e;
                         });
                     } else if (el.id === 'expressionWithoutType') {
-                        let isVar = elem.body.some((node) => {
+                        //here
+                        let flag1 = elem.body.some((node) => {
+                            if (node.id === 'expressionWithType') {
+                                return (
+                                    node.variable ===
+                                    el.variable + `ForBody${forId}`
+                                );
+                            }
+                        });
+
+                        let flag2 = elem.initialization.some((node) => {
                             if (node.id === 'expressionWithType') {
                                 return (
                                     node.variable ===
@@ -571,13 +623,27 @@ const renameVarsInLoop = (funcs) => {
                             }
                         });
 
-                        if (isVar) {
+                        if (flag1) {
+                            el.variable += `ForBody${forId}`;
+                        }
+
+                        if (flag2) {
                             el.variable += `For${forId}`;
                         }
 
                         el.expression.map((e) => {
                             if (e.id === 'word') {
-                                let isVar = elem.body.some((node) => {
+                                //here
+                                let flag1 = elem.body.some((node) => {
+                                    if (node.id === 'expressionWithType') {
+                                        return (
+                                            node.variable ===
+                                            e.value + `ForBody${forId}`
+                                        );
+                                    }
+                                });
+
+                                let flag2 = elem.initialization.some((node) => {
                                     if (node.id === 'expressionWithType') {
                                         return (
                                             node.variable ===
@@ -585,7 +651,12 @@ const renameVarsInLoop = (funcs) => {
                                         );
                                     }
                                 });
-                                if (isVar) {
+
+                                if (flag1) {
+                                    e.value += `ForBody${forId}`;
+                                }
+
+                                if (flag2) {
                                     e.value += `For${forId}`;
                                 }
                             }

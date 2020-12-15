@@ -12,7 +12,7 @@ const lexer = (input) => {
     const LETTERS = /[a-zA-Z]/;
     const NEWLINE = /\r/;
     const WHITESPACE = /[\n\t\f\v ]/;
-    const NUMBERS = /[0-9]|\./;
+    const NUMBERS = /[0-9]|\.|-/;
 
     while (current < input.length) {
         var char = input[current];
