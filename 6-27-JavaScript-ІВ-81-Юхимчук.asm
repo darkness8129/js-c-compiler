@@ -83,7 +83,7 @@ main proc
 	invoke sum, a, 1
 	push eax
 	pop a
-	loopContinueLabel1:
+	loopPostExprLabel1:
 	invoke sum, iFor1, 1
 	push eax
 	pop iFor1
@@ -91,11 +91,11 @@ main proc
 	loopEnd1:
 	mov eax, a
 	push eax
-    pop eax
-    
-    print str$(eax)
-    print chr$(13, 10)
-    mov eax, input("ENTER to continue. . . ")
-    ret
+  pop eax
+  
+  print str$(eax)
+  print chr$(13, 10)
+  mov eax, input("ENTER to continue. . . ")
+  ret
 main endp
 end start

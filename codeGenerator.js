@@ -337,7 +337,7 @@ const generateAsmCodeFromFuncBody = (funcBody) => {
             // do loop body
             generatedAsm.push(...generateAsmCodeFromFuncBody(funcBody[i].body));
 
-            generatedAsm.push(`loopContinueLabel${uniqForId}:`);
+            generatedAsm.push(`loopPostExprLabel${uniqForId}:`);
             // calculate post-expr
             generatedAsm.push(
                 ...generateAsmCodeFromFuncBody(funcBody[i].reinitialization)
@@ -348,7 +348,7 @@ const generateAsmCodeFromFuncBody = (funcBody) => {
         } else if (funcBody[i].id === 'BreakOperator') {
             generatedAsm.push(`jmp loopEnd${uniqForId}`);
         } else if (funcBody[i].id === 'ContinueOperator') {
-            generatedAsm.push(`jmp loopContinueLabel${uniqForId}`);
+            generatedAsm.push(`jmp loopPostExprLabel${uniqForId}`);
         }
     }
 
@@ -488,9 +488,9 @@ const generateAsmFuncs = (asmFuncBodies, variablesAsm, funcs) => {
         let mainPart;
         if (asmFuncBodies[i].func === 'main') {
             mainPart = `
-    print str$(eax)
-    print chr$(13, 10)
-    mov eax, input("ENTER to continue. . . ")`;
+  print str$(eax)
+  print chr$(13, 10)
+  mov eax, input("ENTER to continue. . . ")`;
         } else {
             mainPart = '';
         }
@@ -499,9 +499,9 @@ const generateAsmFuncs = (asmFuncBodies, variablesAsm, funcs) => {
 ${asmFuncBodies[i].func} proc ${params}
     ${variables[0].vars.join('\n\t')}
     ${asmFuncBodies[i].asmCode.join('\n\t')}
-    pop eax
-    ${mainPart}
-    ret
+  pop eax
+  ${mainPart}
+  ret
 ${asmFuncBodies[i].func} endp`;
 
         if (asmFuncBodies[i].func === 'main') {
@@ -542,10 +542,19 @@ const renameVarsInLoop = (funcs) => {
                     return e;
                 });
 
+                // if we do not have expr in cond
+                let expInCond = [...elem.condition];
+                if (expInCond.length === 0) {
+                    expInCond.push({
+                        id: 'NumberLiteral',
+                        value: '1',
+                    });
+                }
+
                 elem.condition = {
                     id: 'expressionWithType',
                     variable: `conditionFor${forId}`,
-                    expression: [...elem.condition],
+                    expression: expInCond,
                 };
 
                 // here if we only do without with declared var in init
@@ -604,7 +613,6 @@ const renameVarsInLoop = (funcs) => {
                             return e;
                         });
                     } else if (el.id === 'expressionWithoutType') {
-                        //here
                         let flag1 = elem.body.some((node) => {
                             if (node.id === 'expressionWithType') {
                                 return (
@@ -633,7 +641,6 @@ const renameVarsInLoop = (funcs) => {
 
                         el.expression.map((e) => {
                             if (e.id === 'word') {
-                                //here
                                 let flag1 = elem.body.some((node) => {
                                     if (node.id === 'expressionWithType') {
                                         return (
@@ -682,7 +689,7 @@ const codeGenerator = (ast) => {
     let funcs = getFuncs(ast);
     //console.log(JSON.stringify(funcs, null, 2));
     funcs = renameVarsInLoop(funcs);
-    console.log(JSON.stringify(funcs, null, 2));
+    //console.log(JSON.stringify(funcs, null, 2));
     // variables
     const variables = getVarsForEachFunc(funcs);
     //console.log(JSON.stringify(variables, null, 2));
